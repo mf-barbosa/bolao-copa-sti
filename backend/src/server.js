@@ -1,3 +1,4 @@
+const predictionRoutes = require("./routes/predictionRoutes");
 const userRoutes = require("./routes/userRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const express = require("express");
@@ -10,6 +11,7 @@ app.use(express.json());
 
 app.use("/matches", matchRoutes);
 app.use("/users", userRoutes);
+app.use("/predictions", predictionRoutes);
 
 app.get("/", (req, res) => {
   res.json({
