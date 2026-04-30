@@ -33,9 +33,18 @@ db.serialize(() => {
       match_id INTEGER,
       predicted_home_score INTEGER,
       predicted_away_score INTEGER,
+      points INTEGER DEFAULT 0,
       created_at TEXT
     )
   `);
+
+  db.run(`
+  ALTER TABLE predictions ADD COLUMN points INTEGER DEFAULT 0
+`, (err) => {
+  if (err && !err.message.includes("duplicate column name")) {
+    console.error("Erro ao adicionar coluna points:", err.message);
+  }
+});
 
   console.log("Tabelas criadas com sucesso!");
 });

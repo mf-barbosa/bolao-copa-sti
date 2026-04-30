@@ -5,5 +5,6 @@ const matchController = require("../controllers/matchController");
 
 router.post("/", matchController.createMatch);
 router.get("/", matchController.getMatches);
+router.put("/:id/result", matchController.updateMatchResult);
 
 module.exports = router;
