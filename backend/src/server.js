@@ -1,3 +1,4 @@
+const userRoutes = require("./routes/userRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const express = require("express");
 const cors = require("cors");
@@ -8,6 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/matches", matchRoutes);
+app.use("/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.json({
