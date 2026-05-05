@@ -21,7 +21,8 @@ db.serialize(() => {
       match_date TEXT,
       group_name TEXT,
       home_score INTEGER,
-      away_score INTEGER
+      away_score INTEGER,
+      status TEXT DEFAULT 'scheduled'
     )
   `);
 
@@ -43,6 +44,14 @@ db.serialize(() => {
 `, (err) => {
   if (err && !err.message.includes("duplicate column name")) {
     console.error("Erro ao adicionar coluna points:", err.message);
+  }
+});
+
+db.run(`
+  ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'scheduled'
+`, (err) => {
+  if (err && !err.message.includes("duplicate column name")) {
+    console.error("Erro ao adicionar coluna status:", err.message);
   }
 });
 
