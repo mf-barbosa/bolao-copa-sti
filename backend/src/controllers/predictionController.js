@@ -111,10 +111,30 @@ exports.createPrediction = (req, res) => {
   });
 };
 
-// Listar palpites
+// Listar palpites com dados do usuário e do jogo
 exports.getPredictions = (req, res) => {
   const query = `
-    SELECT * FROM predictions
+    SELECT
+      predictions.id,
+      predictions.user_id,
+      users.name AS user_name,
+      users.email AS username,
+      predictions.match_id,
+      matches.home_team,
+      matches.away_team,
+      matches.match_date,
+      matches.group_name,
+      matches.status AS match_status,
+      matches.home_score,
+      matches.away_score,
+      predictions.predicted_home_score,
+      predictions.predicted_away_score,
+      predictions.points,
+      predictions.created_at
+    FROM predictions
+    LEFT JOIN users ON users.id = predictions.user_id
+    LEFT JOIN matches ON matches.id = predictions.match_id
+    ORDER BY predictions.created_at DESC
   `;
 
   db.all(query, [], (err, rows) => {
