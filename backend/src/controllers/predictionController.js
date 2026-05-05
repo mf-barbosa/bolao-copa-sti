@@ -65,24 +65,47 @@ exports.createPrediction = (req, res) => {
       });
     }
 
-    const query = `
-      INSERT INTO predictions 
-      (user_id, match_id, predicted_home_score, predicted_away_score, created_at)
-      VALUES (?, ?, ?, ?, datetime('now'))
+    const checkExistingPredictionQuery = `
+      SELECT * FROM predictions
+      WHERE user_id = ? AND match_id = ?
     `;
 
-    db.run(
-      query,
-      [user_id, match_id, predicted_home_score, predicted_away_score],
-      function (err) {
+    db.get(
+      checkExistingPredictionQuery,
+      [user_id, match_id],
+      (err, existingPrediction) => {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
 
-        return res.status(201).json({
-          message: "Palpite criado com sucesso",
-          predictionId: this.lastID,
-        });
+        if (existingPrediction) {
+          return res.status(409).json({
+            error:
+              "Este usuário já fez um palpite para este jogo. Edite o palpite existente.",
+            predictionId: existingPrediction.id,
+          });
+        }
+
+        const insertPredictionQuery = `
+          INSERT INTO predictions
+          (user_id, match_id, predicted_home_score, predicted_away_score, created_at)
+          VALUES (?, ?, ?, ?, datetime('now'))
+        `;
+
+        db.run(
+          insertPredictionQuery,
+          [user_id, match_id, predicted_home_score, predicted_away_score],
+          function (err) {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            }
+
+            return res.status(201).json({
+              message: "Palpite criado com sucesso",
+              predictionId: this.lastID,
+            });
+          }
+        );
       }
     );
   });
@@ -90,7 +113,9 @@ exports.createPrediction = (req, res) => {
 
 // Listar palpites
 exports.getPredictions = (req, res) => {
-  const query = `SELECT * FROM predictions`;
+  const query = `
+    SELECT * FROM predictions
+  `;
 
   db.all(query, [], (err, rows) => {
     if (err) {
