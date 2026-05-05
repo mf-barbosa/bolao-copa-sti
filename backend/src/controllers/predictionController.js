@@ -23,7 +23,8 @@ function canUserPredict(match) {
   if (now >= predictionDeadline) {
     return {
       allowed: false,
-      reason: "Palpites encerrados para este jogo. O limite é 30 minutos antes da partida.",
+      reason:
+        "Palpites encerrados para este jogo. O limite é 30 minutos antes da partida.",
     };
   }
 
@@ -97,5 +98,71 @@ exports.getPredictions = (req, res) => {
     }
 
     return res.json(rows);
+  });
+};
+
+// Editar palpite
+exports.updatePrediction = (req, res) => {
+  const { id } = req.params;
+  const { predicted_home_score, predicted_away_score } = req.body;
+
+  const getPredictionQuery = `
+    SELECT * FROM predictions WHERE id = ?
+  `;
+
+  db.get(getPredictionQuery, [id], (err, prediction) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!prediction) {
+      return res.status(404).json({
+        error: "Palpite não encontrado",
+      });
+    }
+
+    const getMatchQuery = `
+      SELECT * FROM matches WHERE id = ?
+    `;
+
+    db.get(getMatchQuery, [prediction.match_id], (err, match) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!match) {
+        return res.status(404).json({
+          error: "Jogo não encontrado",
+        });
+      }
+
+      const predictionStatus = canUserPredict(match);
+
+      if (!predictionStatus.allowed) {
+        return res.status(403).json({
+          error: predictionStatus.reason,
+        });
+      }
+
+      const updatePredictionQuery = `
+        UPDATE predictions
+        SET predicted_home_score = ?, predicted_away_score = ?, points = 0
+        WHERE id = ?
+      `;
+
+      db.run(
+        updatePredictionQuery,
+        [predicted_home_score, predicted_away_score, id],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+
+          return res.json({
+            message: "Palpite atualizado com sucesso",
+          });
+        }
+      );
+    });
   });
 };
