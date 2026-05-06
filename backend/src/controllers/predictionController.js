@@ -33,14 +33,21 @@ function canUserPredict(match) {
   };
 }
 
-// Criar palpite
+// Criar palpite usando o usuário logado
 exports.createPrediction = (req, res) => {
-  const {
-    user_id,
-    match_id,
-    predicted_home_score,
-    predicted_away_score,
-  } = req.body;
+  const user_id = req.user.id;
+
+  const { match_id, predicted_home_score, predicted_away_score } = req.body;
+
+  if (
+    !match_id ||
+    predicted_home_score === undefined ||
+    predicted_away_score === undefined
+  ) {
+    return res.status(400).json({
+      error: "match_id, predicted_home_score e predicted_away_score são obrigatórios.",
+    });
+  }
 
   const getMatchQuery = `
     SELECT * FROM matches WHERE id = ?
@@ -53,7 +60,7 @@ exports.createPrediction = (req, res) => {
 
     if (!match) {
       return res.status(404).json({
-        error: "Jogo não encontrado",
+        error: "Jogo não encontrado.",
       });
     }
 
@@ -101,7 +108,7 @@ exports.createPrediction = (req, res) => {
             }
 
             return res.status(201).json({
-              message: "Palpite criado com sucesso",
+              message: "Palpite criado com sucesso.",
               predictionId: this.lastID,
             });
           }
@@ -146,10 +153,22 @@ exports.getPredictions = (req, res) => {
   });
 };
 
-// Editar palpite
+// Editar palpite usando o usuário logado
 exports.updatePrediction = (req, res) => {
   const { id } = req.params;
+  const user_id = req.user.id;
+  const is_admin = Number(req.user.is_admin) === 1;
+
   const { predicted_home_score, predicted_away_score } = req.body;
+
+  if (
+    predicted_home_score === undefined ||
+    predicted_away_score === undefined
+  ) {
+    return res.status(400).json({
+      error: "predicted_home_score e predicted_away_score são obrigatórios.",
+    });
+  }
 
   const getPredictionQuery = `
     SELECT * FROM predictions WHERE id = ?
@@ -162,7 +181,13 @@ exports.updatePrediction = (req, res) => {
 
     if (!prediction) {
       return res.status(404).json({
-        error: "Palpite não encontrado",
+        error: "Palpite não encontrado.",
+      });
+    }
+
+    if (!is_admin && prediction.user_id !== user_id) {
+      return res.status(403).json({
+        error: "Você não tem permissão para editar este palpite.",
       });
     }
 
@@ -177,7 +202,7 @@ exports.updatePrediction = (req, res) => {
 
       if (!match) {
         return res.status(404).json({
-          error: "Jogo não encontrado",
+          error: "Jogo não encontrado.",
         });
       }
 
@@ -204,7 +229,7 @@ exports.updatePrediction = (req, res) => {
           }
 
           return res.json({
-            message: "Palpite atualizado com sucesso",
+            message: "Palpite atualizado com sucesso.",
           });
         }
       );
