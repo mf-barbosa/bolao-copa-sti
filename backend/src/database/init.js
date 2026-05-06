@@ -1,4 +1,5 @@
 console.log("Iniciando criação do banco...");
+
 const db = require("./database");
 
 db.serialize(() => {
@@ -8,7 +9,8 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       email TEXT UNIQUE,
-      password TEXT
+      password TEXT,
+      is_admin INTEGER DEFAULT 0
     )
   `);
 
@@ -39,21 +41,38 @@ db.serialize(() => {
     )
   `);
 
-  db.run(`
-  ALTER TABLE predictions ADD COLUMN points INTEGER DEFAULT 0
-`, (err) => {
-  if (err && !err.message.includes("duplicate column name")) {
-    console.error("Erro ao adicionar coluna points:", err.message);
-  }
-});
+  db.run(
+    `
+      ALTER TABLE predictions ADD COLUMN points INTEGER DEFAULT 0
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna points:", err.message);
+      }
+    }
+  );
 
-db.run(`
-  ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'scheduled'
-`, (err) => {
-  if (err && !err.message.includes("duplicate column name")) {
-    console.error("Erro ao adicionar coluna status:", err.message);
-  }
-});
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'scheduled'
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna status:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna is_admin:", err.message);
+      }
+    }
+  );
 
   console.log("Tabelas criadas com sucesso!");
 });
