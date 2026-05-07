@@ -6,9 +6,9 @@ const db = require("../database/database");
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_bolao_copa_sti";
 
-// Criar usuário
+// Criar usuário comum
 exports.createUser = async (req, res) => {
-  const { name, username, password, is_admin = 0 } = req.body;
+  const { name, username, password } = req.body;
 
   if (!name || !username || !password) {
     return res.status(400).json({
@@ -21,10 +21,10 @@ exports.createUser = async (req, res) => {
 
     const query = `
       INSERT INTO users (name, email, password, is_admin)
-      VALUES (?, ?, ?, ?)
+      VALUES (?, ?, ?, 0)
     `;
 
-    db.run(query, [name, username, hashedPassword, is_admin], function (err) {
+    db.run(query, [name, username, hashedPassword], function (err) {
       if (err) {
         if (err.message.includes("UNIQUE constraint failed")) {
           return res.status(409).json({
