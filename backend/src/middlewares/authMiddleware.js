@@ -35,6 +35,25 @@ function authenticateToken(req, res, next) {
   });
 }
 
+function authorizeAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      error: "Usuário não autenticado.",
+    });
+  }
+
+  const isAdmin = Number(req.user.is_admin) === 1;
+
+  if (!isAdmin) {
+    return res.status(403).json({
+      error: "Acesso negado. Apenas administradores podem executar esta ação.",
+    });
+  }
+
+  next();
+}
+
 module.exports = {
   authenticateToken,
+  authorizeAdmin,
 };
