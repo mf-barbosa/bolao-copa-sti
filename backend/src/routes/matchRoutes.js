@@ -23,4 +23,11 @@ router.put(
   matchController.updateMatchResult
 );
 
+router.put(
+  "/:id/status",
+  authenticateToken,
+  authorizeAdmin,
+  matchController.updateMatchStatus
+);
+
 module.exports = router;

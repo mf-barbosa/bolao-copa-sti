@@ -1,6 +1,8 @@
 const db = require("../database/database");
 const { calcularPontuacao } = require("../services/scoreService");
 
+const ALLOWED_STATUSES = ["scheduled", "postponed", "live", "finished", "cancelled"];
+
 // Criar jogo
 exports.createMatch = (req, res) => {
   const { home_team, away_team, match_date, group_name } = req.body;
@@ -98,6 +100,7 @@ exports.updateMatchResult = (req, res) => {
       }
 
       let updatedPredictions = 0;
+      let hasError = false;
 
       predictions.forEach((prediction) => {
         const points = calcularPontuacao(prediction, {
@@ -112,7 +115,12 @@ exports.updateMatchResult = (req, res) => {
         `;
 
         db.run(updatePointsQuery, [points, prediction.id], (err) => {
+          if (hasError) {
+            return;
+          }
+
           if (err) {
+            hasError = true;
             return res.status(500).json({ error: err.message });
           }
 
@@ -125,6 +133,61 @@ exports.updateMatchResult = (req, res) => {
           }
         });
       });
+    });
+  });
+};
+
+// Atualizar status do jogo
+exports.updateMatchStatus = (req, res) => {
+  const { id } = req.params;
+  const { status, match_date } = req.body;
+
+  if (!status) {
+    return res.status(400).json({
+      error: "status é obrigatório.",
+    });
+  }
+
+  if (!ALLOWED_STATUSES.includes(status)) {
+    return res.status(400).json({
+      error: `Status inválido. Use um destes: ${ALLOWED_STATUSES.join(", ")}.`,
+    });
+  }
+
+  let query = "";
+  let params = [];
+
+  if (match_date) {
+    query = `
+      UPDATE matches
+      SET status = ?, match_date = ?
+      WHERE id = ?
+    `;
+
+    params = [status, match_date, id];
+  } else {
+    query = `
+      UPDATE matches
+      SET status = ?
+      WHERE id = ?
+    `;
+
+    params = [status, id];
+  }
+
+  db.run(query, params, function (err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({
+        error: "Jogo não encontrado.",
+      });
+    }
+
+    return res.json({
+      message: "Status do jogo atualizado com sucesso.",
     });
   });
 };
