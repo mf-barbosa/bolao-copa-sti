@@ -1,11 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 
-
-const rankingRoutes = require("./routes/rankingRoutes");
-const predictionRoutes = require("./routes/predictionRoutes");
-const userRoutes = require("./routes/userRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const userRoutes = require("./routes/userRoutes");
+const predictionRoutes = require("./routes/predictionRoutes");
+const rankingRoutes = require("./routes/rankingRoutes");
+const poolRoutes = require("./routes/poolRoutes");
 
 const app = express();
 
@@ -16,6 +16,7 @@ app.use("/matches", matchRoutes);
 app.use("/users", userRoutes);
 app.use("/predictions", predictionRoutes);
 app.use("/ranking", rankingRoutes);
+app.use("/pools", poolRoutes);
 
 app.get("/", (req, res) => {
   res.json({
