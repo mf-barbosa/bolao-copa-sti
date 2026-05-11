@@ -136,10 +136,39 @@ exports.loginUser = (req, res) => {
   });
 };
 
-// Listar usuários
+// Retornar usuário logado
+exports.getMe = (req, res) => {
+  const userId = req.user.id;
+
+  const query = `
+    SELECT id, name, email AS username, is_admin
+    FROM users
+    WHERE id = ?
+  `;
+
+  db.get(query, [userId], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: "Usuário não encontrado.",
+      });
+    }
+
+    return res.json({
+      user,
+    });
+  });
+};
+
+// Listar usuários — apenas admin
 exports.getUsers = (req, res) => {
   const query = `
-    SELECT id, name, email AS username, is_admin FROM users
+    SELECT id, name, email AS username, is_admin
+    FROM users
+    ORDER BY id ASC
   `;
 
   db.all(query, [], (err, rows) => {
