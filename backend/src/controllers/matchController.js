@@ -32,6 +32,41 @@ function checkUserInPool(userId, poolId, callback) {
   });
 }
 
+function getPredictionStatus(match) {
+  const status = match.status || "scheduled";
+
+  if (status === "postponed") {
+    return {
+      can_predict: true,
+      reason: null,
+    };
+  }
+
+  if (status !== "scheduled") {
+    return {
+      can_predict: false,
+      reason: "Não é possível palpitar neste jogo por causa do status atual.",
+    };
+  }
+
+  const matchDate = new Date(match.match_date.replace(" ", "T"));
+  const predictionDeadline = new Date(matchDate.getTime() - 30 * 60 * 1000);
+  const now = new Date();
+
+  if (now >= predictionDeadline) {
+    return {
+      can_predict: false,
+      reason:
+        "Palpites encerrados para este jogo. O limite é 30 minutos antes da partida.",
+    };
+  }
+
+  return {
+    can_predict: true,
+    reason: null,
+  };
+}
+
 // Criar jogo
 exports.createMatch = (req, res) => {
   const { home_team, away_team, match_date, group_name } = req.body;
@@ -206,6 +241,130 @@ exports.getGroupsProgress = (req, res) => {
       }
 
       return buildProgress();
+    });
+  });
+};
+
+// Listar jogos de um grupo com o palpite do usuário logado em um bolão
+exports.getMatchesByGroupWithPredictions = (req, res) => {
+  const { groupName } = req.params;
+  const { pool_id } = req.query;
+
+  const userId = req.user.id;
+  const isAdmin = isAdminUser(req);
+  const poolIdNumber = validatePoolId(pool_id);
+
+  if (!groupName) {
+    return res.status(400).json({
+      error: "groupName é obrigatório.",
+    });
+  }
+
+  if (!poolIdNumber) {
+    return res.status(400).json({
+      error: "pool_id é obrigatório e deve ser um número válido.",
+    });
+  }
+
+  const getPoolQuery = `
+    SELECT * FROM pools WHERE id = ?
+  `;
+
+  db.get(getPoolQuery, [poolIdNumber], (err, pool) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!pool) {
+      return res.status(404).json({
+        error: "Bolão não encontrado.",
+      });
+    }
+
+    const buildMatchesList = () => {
+      const query = `
+        SELECT
+          matches.id,
+          matches.home_team,
+          matches.away_team,
+          matches.match_date,
+          matches.group_name,
+          matches.home_score,
+          matches.away_score,
+          matches.status,
+          predictions.id AS prediction_id,
+          predictions.predicted_home_score,
+          predictions.predicted_away_score,
+          predictions.points,
+          predictions.created_at AS prediction_created_at
+        FROM matches
+        LEFT JOIN predictions
+          ON predictions.match_id = matches.id
+          AND predictions.pool_id = ?
+          AND predictions.user_id = ?
+        WHERE matches.group_name = ?
+        ORDER BY matches.match_date ASC
+      `;
+
+      db.all(query, [poolIdNumber, userId, groupName], (err, rows) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+
+        const matches = rows.map((match) => {
+          const predictionStatus = getPredictionStatus(match);
+
+          return {
+            id: match.id,
+            home_team: match.home_team,
+            away_team: match.away_team,
+            match_date: match.match_date,
+            group_name: match.group_name,
+            home_score: match.home_score,
+            away_score: match.away_score,
+            status: match.status,
+            can_predict: predictionStatus.can_predict,
+            prediction_locked_reason: predictionStatus.reason,
+            prediction: match.prediction_id
+              ? {
+                  id: match.prediction_id,
+                  predicted_home_score: match.predicted_home_score,
+                  predicted_away_score: match.predicted_away_score,
+                  points: match.points,
+                  created_at: match.prediction_created_at,
+                }
+              : null,
+          };
+        });
+
+        return res.json({
+          pool: {
+            id: pool.id,
+            name: pool.name,
+            code: pool.code,
+          },
+          group_name: groupName,
+          matches,
+        });
+      });
+    };
+
+    if (isAdmin) {
+      return buildMatchesList();
+    }
+
+    checkUserInPool(userId, poolIdNumber, (err, isMember) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!isMember) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
+
+      return buildMatchesList();
     });
   });
 };

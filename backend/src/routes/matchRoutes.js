@@ -15,6 +15,12 @@ router.get(
   matchController.getGroupsProgress
 );
 
+router.get(
+  "/group/:groupName",
+  authenticateToken,
+  matchController.getMatchesByGroupWithPredictions
+);
+
 router.post(
   "/",
   authenticateToken,
