@@ -3,6 +3,35 @@ const { calcularPontuacao } = require("../services/scoreService");
 
 const ALLOWED_STATUSES = ["scheduled", "postponed", "live", "finished", "cancelled"];
 
+function isAdminUser(req) {
+  return Number(req.user?.is_admin) === 1;
+}
+
+function validatePoolId(pool_id) {
+  const poolIdNumber = Number(pool_id);
+
+  if (!pool_id || Number.isNaN(poolIdNumber)) {
+    return null;
+  }
+
+  return poolIdNumber;
+}
+
+function checkUserInPool(userId, poolId, callback) {
+  const query = `
+    SELECT * FROM pool_users
+    WHERE user_id = ? AND pool_id = ?
+  `;
+
+  db.get(query, [userId, poolId], (err, membership) => {
+    if (err) {
+      return callback(err);
+    }
+
+    return callback(null, Boolean(membership));
+  });
+}
+
 // Criar jogo
 exports.createMatch = (req, res) => {
   const { home_team, away_team, match_date, group_name } = req.body;
@@ -87,6 +116,97 @@ exports.getGroupsSummary = (req, res) => {
     }
 
     return res.json(rows);
+  });
+};
+
+// Listar progresso de palpites por grupo para o usuário logado em um bolão
+exports.getGroupsProgress = (req, res) => {
+  const { pool_id } = req.query;
+  const userId = req.user.id;
+  const isAdmin = isAdminUser(req);
+
+  const poolIdNumber = validatePoolId(pool_id);
+
+  if (!poolIdNumber) {
+    return res.status(400).json({
+      error: "pool_id é obrigatório e deve ser um número válido.",
+    });
+  }
+
+  const getPoolQuery = `
+    SELECT * FROM pools WHERE id = ?
+  `;
+
+  db.get(getPoolQuery, [poolIdNumber], (err, pool) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!pool) {
+      return res.status(404).json({
+        error: "Bolão não encontrado.",
+      });
+    }
+
+    const buildProgress = () => {
+      const query = `
+        SELECT
+          matches.group_name,
+          COUNT(matches.id) AS matches_count,
+          COUNT(predictions.id) AS predictions_count,
+          COUNT(matches.id) - COUNT(predictions.id) AS missing_predictions_count,
+          SUM(CASE WHEN matches.status = 'scheduled' THEN 1 ELSE 0 END) AS scheduled_count,
+          SUM(CASE WHEN matches.status = 'postponed' THEN 1 ELSE 0 END) AS postponed_count,
+          SUM(CASE WHEN matches.status = 'live' THEN 1 ELSE 0 END) AS live_count,
+          SUM(CASE WHEN matches.status = 'finished' THEN 1 ELSE 0 END) AS finished_count,
+          SUM(CASE WHEN matches.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+        FROM matches
+        LEFT JOIN predictions
+          ON predictions.match_id = matches.id
+          AND predictions.pool_id = ?
+          AND predictions.user_id = ?
+        GROUP BY matches.group_name
+        ORDER BY matches.group_name ASC
+      `;
+
+      db.all(query, [poolIdNumber, userId], (err, rows) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+
+        const progress = rows.map((group) => ({
+          ...group,
+          completed: group.matches_count === group.predictions_count,
+        }));
+
+        return res.json({
+          pool: {
+            id: pool.id,
+            name: pool.name,
+            code: pool.code,
+          },
+          progress,
+        });
+      });
+    };
+
+    if (isAdmin) {
+      return buildProgress();
+    }
+
+    checkUserInPool(userId, poolIdNumber, (err, isMember) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!isMember) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
+
+      return buildProgress();
+    });
   });
 };
 

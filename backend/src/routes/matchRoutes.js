@@ -9,6 +9,11 @@ const {
 
 router.get("/", matchController.getMatches);
 router.get("/groups", matchController.getGroupsSummary);
+router.get(
+  "/groups/progress",
+  authenticateToken,
+  matchController.getGroupsProgress
+);
 
 router.post(
   "/",
