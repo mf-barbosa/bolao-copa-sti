@@ -1,5 +1,9 @@
 const db = require("../database/database");
 
+function isAdminUser(req) {
+  return Number(req.user?.is_admin) === 1;
+}
+
 function canUserPredict(match) {
   const status = match.status || "scheduled";
 
@@ -33,19 +37,92 @@ function canUserPredict(match) {
   };
 }
 
-// Criar palpite usando o usuário logado
+function validatePoolId(pool_id) {
+  const poolIdNumber = Number(pool_id);
+
+  if (!pool_id || Number.isNaN(poolIdNumber)) {
+    return null;
+  }
+
+  return poolIdNumber;
+}
+
+function checkUserInPool(userId, poolId, callback) {
+  const query = `
+    SELECT * FROM pool_users
+    WHERE user_id = ? AND pool_id = ?
+  `;
+
+  db.get(query, [userId, poolId], (err, membership) => {
+    if (err) {
+      return callback(err);
+    }
+
+    return callback(null, Boolean(membership));
+  });
+}
+
+function getDetailedPredictions(whereClause, params, res) {
+  const query = `
+    SELECT
+      predictions.id,
+      predictions.user_id,
+      users.name AS user_name,
+      users.email AS username,
+      predictions.match_id,
+      predictions.pool_id,
+      pools.name AS pool_name,
+      pools.code AS pool_code,
+      matches.home_team,
+      matches.away_team,
+      matches.match_date,
+      matches.group_name,
+      matches.status AS match_status,
+      matches.home_score,
+      matches.away_score,
+      predictions.predicted_home_score,
+      predictions.predicted_away_score,
+      predictions.points,
+      predictions.created_at
+    FROM predictions
+    LEFT JOIN users ON users.id = predictions.user_id
+    LEFT JOIN matches ON matches.id = predictions.match_id
+    LEFT JOIN pools ON pools.id = predictions.pool_id
+    ${whereClause}
+    ORDER BY predictions.created_at DESC
+  `;
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    return res.json(rows);
+  });
+}
+
+// Criar palpite usando o usuário logado e o bolão informado
 exports.createPrediction = (req, res) => {
   const user_id = req.user.id;
 
-  const { match_id, predicted_home_score, predicted_away_score } = req.body;
+  const {
+    match_id,
+    pool_id,
+    predicted_home_score,
+    predicted_away_score,
+  } = req.body;
+
+  const poolIdNumber = validatePoolId(pool_id);
 
   if (
     !match_id ||
+    !poolIdNumber ||
     predicted_home_score === undefined ||
     predicted_away_score === undefined
   ) {
     return res.status(400).json({
-      error: "match_id, predicted_home_score e predicted_away_score são obrigatórios.",
+      error:
+        "match_id, pool_id, predicted_home_score e predicted_away_score são obrigatórios.",
     });
   }
 
@@ -72,92 +149,157 @@ exports.createPrediction = (req, res) => {
       });
     }
 
-    const checkExistingPredictionQuery = `
-      SELECT * FROM predictions
-      WHERE user_id = ? AND match_id = ?
-    `;
+    checkUserInPool(user_id, poolIdNumber, (err, isMember) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
 
-    db.get(
-      checkExistingPredictionQuery,
-      [user_id, match_id],
-      (err, existingPrediction) => {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
+      if (!isMember && !isAdminUser(req)) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
 
-        if (existingPrediction) {
-          return res.status(409).json({
-            error:
-              "Este usuário já fez um palpite para este jogo. Edite o palpite existente.",
-            predictionId: existingPrediction.id,
-          });
-        }
+      const checkExistingPredictionQuery = `
+        SELECT * FROM predictions
+        WHERE user_id = ? AND match_id = ? AND pool_id = ?
+      `;
 
-        const insertPredictionQuery = `
-          INSERT INTO predictions
-          (user_id, match_id, predicted_home_score, predicted_away_score, created_at)
-          VALUES (?, ?, ?, ?, datetime('now'))
-        `;
+      db.get(
+        checkExistingPredictionQuery,
+        [user_id, match_id, poolIdNumber],
+        (err, existingPrediction) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
 
-        db.run(
-          insertPredictionQuery,
-          [user_id, match_id, predicted_home_score, predicted_away_score],
-          function (err) {
-            if (err) {
-              return res.status(500).json({ error: err.message });
-            }
-
-            return res.status(201).json({
-              message: "Palpite criado com sucesso.",
-              predictionId: this.lastID,
+          if (existingPrediction) {
+            return res.status(409).json({
+              error:
+                "Este usuário já fez um palpite para este jogo neste bolão. Edite o palpite existente.",
+              predictionId: existingPrediction.id,
             });
           }
-        );
-      }
-    );
+
+          const insertPredictionQuery = `
+            INSERT INTO predictions
+            (user_id, match_id, pool_id, predicted_home_score, predicted_away_score, created_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
+          `;
+
+          db.run(
+            insertPredictionQuery,
+            [
+              user_id,
+              match_id,
+              poolIdNumber,
+              predicted_home_score,
+              predicted_away_score,
+            ],
+            function (err) {
+              if (err) {
+                return res.status(500).json({ error: err.message });
+              }
+
+              return res.status(201).json({
+                message: "Palpite criado com sucesso.",
+                predictionId: this.lastID,
+              });
+            }
+          );
+        }
+      );
+    });
   });
 };
 
-// Listar palpites com dados do usuário e do jogo
+// Listar palpites
+// Admin vê todos. Usuário comum vê apenas os próprios.
 exports.getPredictions = (req, res) => {
-  const query = `
-    SELECT
-      predictions.id,
-      predictions.user_id,
-      users.name AS user_name,
-      users.email AS username,
-      predictions.match_id,
-      matches.home_team,
-      matches.away_team,
-      matches.match_date,
-      matches.group_name,
-      matches.status AS match_status,
-      matches.home_score,
-      matches.away_score,
-      predictions.predicted_home_score,
-      predictions.predicted_away_score,
-      predictions.points,
-      predictions.created_at
-    FROM predictions
-    LEFT JOIN users ON users.id = predictions.user_id
-    LEFT JOIN matches ON matches.id = predictions.match_id
-    ORDER BY predictions.created_at DESC
-  `;
+  const { pool_id } = req.query;
+  const userId = req.user.id;
+  const isAdmin = isAdminUser(req);
 
-  db.all(query, [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+  if (pool_id) {
+    const poolIdNumber = validatePoolId(pool_id);
+
+    if (!poolIdNumber) {
+      return res.status(400).json({
+        error: "pool_id inválido.",
+      });
     }
 
-    return res.json(rows);
-  });
+    if (isAdmin) {
+      return getDetailedPredictions(
+        "WHERE predictions.pool_id = ?",
+        [poolIdNumber],
+        res
+      );
+    }
+
+    return checkUserInPool(userId, poolIdNumber, (err, isMember) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!isMember) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
+
+      return getDetailedPredictions(
+        "WHERE predictions.pool_id = ? AND predictions.user_id = ?",
+        [poolIdNumber, userId],
+        res
+      );
+    });
+  }
+
+  if (isAdmin) {
+    return getDetailedPredictions("", [], res);
+  }
+
+  return getDetailedPredictions(
+    "WHERE predictions.user_id = ?",
+    [userId],
+    res
+  );
+};
+
+// Listar meus palpites
+exports.getMyPredictions = (req, res) => {
+  const userId = req.user.id;
+  const { pool_id } = req.query;
+
+  if (pool_id) {
+    const poolIdNumber = validatePoolId(pool_id);
+
+    if (!poolIdNumber) {
+      return res.status(400).json({
+        error: "pool_id inválido.",
+      });
+    }
+
+    return getDetailedPredictions(
+      "WHERE predictions.user_id = ? AND predictions.pool_id = ?",
+      [userId, poolIdNumber],
+      res
+    );
+  }
+
+  return getDetailedPredictions(
+    "WHERE predictions.user_id = ?",
+    [userId],
+    res
+  );
 };
 
 // Editar palpite usando o usuário logado
 exports.updatePrediction = (req, res) => {
   const { id } = req.params;
   const user_id = req.user.id;
-  const is_admin = Number(req.user.is_admin) === 1;
+  const isAdmin = isAdminUser(req);
 
   const { predicted_home_score, predicted_away_score } = req.body;
 
@@ -185,7 +327,7 @@ exports.updatePrediction = (req, res) => {
       });
     }
 
-    if (!is_admin && prediction.user_id !== user_id) {
+    if (!isAdmin && prediction.user_id !== user_id) {
       return res.status(403).json({
         error: "Você não tem permissão para editar este palpite.",
       });
