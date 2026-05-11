@@ -8,6 +8,7 @@ const {
 } = require("../middlewares/authMiddleware");
 
 router.get("/", matchController.getMatches);
+router.get("/groups", matchController.getGroupsSummary);
 
 router.post(
   "/",

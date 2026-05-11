@@ -30,11 +30,55 @@ exports.createMatch = (req, res) => {
   });
 };
 
-// Listar jogos
+// Listar jogos com filtros opcionais
 exports.getMatches = (req, res) => {
+  const { group_name, status } = req.query;
+
+  const filters = [];
+  const params = [];
+
+  if (group_name) {
+    filters.push("group_name = ?");
+    params.push(group_name);
+  }
+
+  if (status) {
+    filters.push("status = ?");
+    params.push(status);
+  }
+
+  const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+
   const query = `
-    SELECT * FROM matches
+    SELECT *
+    FROM matches
+    ${whereClause}
     ORDER BY match_date ASC
+  `;
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    return res.json(rows);
+  });
+};
+
+// Listar resumo dos grupos
+exports.getGroupsSummary = (req, res) => {
+  const query = `
+    SELECT
+      group_name,
+      COUNT(*) AS matches_count,
+      SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) AS scheduled_count,
+      SUM(CASE WHEN status = 'postponed' THEN 1 ELSE 0 END) AS postponed_count,
+      SUM(CASE WHEN status = 'live' THEN 1 ELSE 0 END) AS live_count,
+      SUM(CASE WHEN status = 'finished' THEN 1 ELSE 0 END) AS finished_count,
+      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+    FROM matches
+    GROUP BY group_name
+    ORDER BY group_name ASC
   `;
 
   db.all(query, [], (err, rows) => {
