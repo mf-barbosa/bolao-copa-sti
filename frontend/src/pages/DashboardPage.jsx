@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import api from '../api/api';
 import { getCurrentUser, logout } from '../auth/authService';
 
 import '../styles/dashboard.css';
@@ -11,28 +12,117 @@ function DashboardPage() {
   const user = getCurrentUser();
 
   const [poolCode, setPoolCode] = useState('');
+  const [pools, setPools] = useState([]);
+  const [selectedPool, setSelectedPool] = useState(null);
+
+  const [loadingPools, setLoadingPools] = useState(true);
+  const [joiningPool, setJoiningPool] = useState(false);
+
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const userName = user?.name || 'Jogador';
   const isAdmin = Boolean(user?.is_admin);
 
+  useEffect(() => {
+    const storedPool = localStorage.getItem('bolao_selected_pool');
+
+    if (storedPool) {
+      try {
+        setSelectedPool(JSON.parse(storedPool));
+      } catch {
+        localStorage.removeItem('bolao_selected_pool');
+      }
+    }
+
+    loadMyPools();
+  }, []);
+
+  async function loadMyPools() {
+    try {
+      setLoadingPools(true);
+      setError('');
+
+      const response = await api.get('/pools/me');
+
+      setPools(response.data);
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          'Não foi possível carregar seus bolões. Verifique se o backend está rodando.'
+      );
+    } finally {
+      setLoadingPools(false);
+    }
+  }
+
   function handleLogout() {
     logout();
+    localStorage.removeItem('bolao_selected_pool');
     navigate('/', { replace: true });
   }
 
-  function handleJoinPool(event) {
+  function handleSelectPool(pool) {
+    setSelectedPool(pool);
+    localStorage.setItem('bolao_selected_pool', JSON.stringify(pool));
+
+    setMessage(`Bolão "${pool.name}" selecionado com sucesso.`);
+    setError('');
+  }
+
+  async function handleJoinPool(event) {
     event.preventDefault();
 
     const formattedCode = poolCode.trim().toUpperCase();
 
+    setMessage('');
+    setError('');
+
     if (!formattedCode) {
-      setMessage('Digite o código do bolão para continuar.');
+      setError('Digite o código do bolão para continuar.');
+      return;
+    }
+
+    try {
+      setJoiningPool(true);
+
+      const response = await api.post('/pools/join', {
+        code: formattedCode,
+      });
+
+      const joinedPool = response.data.pool;
+
+      setPoolCode('');
+      setMessage(response.data.message || 'Você entrou no bolão com sucesso.');
+
+      handleSelectPool(joinedPool);
+      await loadMyPools();
+    } catch (err) {
+      const apiError = err.response?.data;
+
+      if (apiError?.poolId) {
+        setError(
+          'Você já participa deste bolão. Selecione ele na lista de seus bolões.'
+        );
+
+        await loadMyPools();
+        return;
+      }
+
+      setError(apiError?.error || 'Não foi possível entrar no bolão.');
+    } finally {
+      setJoiningPool(false);
+    }
+  }
+
+  function handleGoToPool() {
+    if (!selectedPool) {
+      setError('Selecione um bolão antes de continuar.');
       return;
     }
 
     setMessage(
-      `Código "${formattedCode}" recebido. No próximo passo vamos conectar essa ação com a API.`
+      `Próxima etapa: abrir tela dos grupos usando pool_id=${selectedPool.id}.`
     );
   }
 
@@ -61,23 +151,41 @@ function DashboardPage() {
           <div>
             <p className="dashboard-tag">Frontend MVP</p>
 
-            <h1>Entre no seu bolão e comece a disputa</h1>
+            <h1>Escolha seu bolão e entre na disputa</h1>
 
             <p className="dashboard-description">
-              Use o código compartilhado pela galera para entrar em um bolão
-              existente ou acompanhe os bolões em que você já participa.
+              Use um código para entrar em um bolão ou selecione um bolão em que
+              você já participa. Depois disso, vamos liberar os grupos, jogos,
+              palpites e ranking.
             </p>
           </div>
 
           <div className="dashboard-hero-card">
             <span>🏆</span>
-            <strong>Ranking, palpites e grupos</strong>
+            <strong>
+              {selectedPool
+                ? `Bolão selecionado: ${selectedPool.name}`
+                : 'Nenhum bolão selecionado'}
+            </strong>
+
             <p>
-              Depois de entrar em um bolão, você poderá acompanhar jogos,
-              enviar palpites e disputar o topo do ranking.
+              {selectedPool
+                ? `Código: ${selectedPool.code} • ID: ${selectedPool.id}`
+                : 'Selecione ou entre em um bolão para continuar o fluxo principal do sistema.'}
             </p>
+
+            <button type="button" onClick={handleGoToPool}>
+              Continuar para os grupos
+            </button>
           </div>
         </section>
+
+        {(message || error) && (
+          <section className="feedback-area">
+            {message && <p className="dashboard-message">{message}</p>}
+            {error && <p className="dashboard-error">{error}</p>}
+          </section>
+        )}
 
         <section className="dashboard-grid">
           <article className="dashboard-card join-card">
@@ -95,32 +203,67 @@ function DashboardPage() {
               <input
                 id="poolCode"
                 type="text"
-                placeholder="Ex: COPA2026"
+                placeholder="Ex: STI2026"
                 value={poolCode}
                 onChange={(event) => setPoolCode(event.target.value)}
               />
 
-              <button type="submit">Entrar no bolão</button>
+              <button type="submit" disabled={joiningPool}>
+                {joiningPool ? 'Entrando...' : 'Entrar no bolão'}
+              </button>
             </form>
-
-            {message && <p className="dashboard-message">{message}</p>}
           </article>
 
-          <article className="dashboard-card">
+          <article className="dashboard-card my-pools-card">
             <div className="card-header">
               <span>📋</span>
               <div>
                 <h2>Meus bolões</h2>
-                <p>Lista dos bolões em que você participa.</p>
+                <p>Selecione o bolão que deseja acessar.</p>
               </div>
             </div>
 
-            <div className="empty-state">
-              <strong>Nenhum bolão carregado ainda</strong>
-              <p>
-                No próximo passo vamos buscar seus bolões diretamente da API.
-              </p>
-            </div>
+            {loadingPools && (
+              <div className="empty-state">
+                <strong>Carregando seus bolões...</strong>
+                <p>Aguarde enquanto buscamos seus dados na API.</p>
+              </div>
+            )}
+
+            {!loadingPools && pools.length === 0 && (
+              <div className="empty-state">
+                <strong>Você ainda não participa de nenhum bolão</strong>
+                <p>Use o campo de código para entrar no primeiro bolão.</p>
+              </div>
+            )}
+
+            {!loadingPools && pools.length > 0 && (
+              <div className="pools-list">
+                {pools.map((pool) => {
+                  const isSelected = selectedPool?.id === pool.id;
+
+                  return (
+                    <button
+                      type="button"
+                      key={pool.id}
+                      className={`pool-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleSelectPool(pool)}
+                    >
+                      <div>
+                        <strong>{pool.name}</strong>
+                        <span>{pool.code}</span>
+                      </div>
+
+                      {isSelected ? (
+                        <small>Selecionado</small>
+                      ) : (
+                        <small>Selecionar</small>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </article>
 
           <article className="dashboard-card">
@@ -128,19 +271,19 @@ function DashboardPage() {
               <span>⚽</span>
               <div>
                 <h2>Próximos jogos</h2>
-                <p>Atalho para palpites da Copa.</p>
+                <p>Atalho para os grupos da Copa.</p>
               </div>
             </div>
 
             <div className="preview-list">
               <div>
-                <span>Grupo A</span>
-                <strong>Jogos em breve</strong>
+                <span>Bolão ativo</span>
+                <strong>{selectedPool ? selectedPool.name : 'Não selecionado'}</strong>
               </div>
 
               <div>
-                <span>Status</span>
-                <strong>Aguardando bolão</strong>
+                <span>Próxima tela</span>
+                <strong>Grupos</strong>
               </div>
             </div>
           </article>
@@ -162,6 +305,16 @@ function DashboardPage() {
               <span>Tipo de usuário</span>
               <strong>{isAdmin ? 'Administrador' : 'Participante'}</strong>
             </div>
+
+            {isAdmin && (
+              <div className="admin-hint">
+                <strong>Admin disponível</strong>
+                <p>
+                  O painel administrativo será conectado em uma etapa própria do
+                  frontend.
+                </p>
+              </div>
+            )}
           </article>
         </section>
       </main>
