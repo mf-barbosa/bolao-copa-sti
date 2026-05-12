@@ -18,10 +18,15 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS matches (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_number INTEGER,
       home_team TEXT,
       away_team TEXT,
       match_date TEXT,
       group_name TEXT,
+      stage TEXT DEFAULT 'group_stage',
+      stadium TEXT,
+      city TEXT,
+      country TEXT,
       home_score INTEGER,
       away_score INTEGER,
       status TEXT DEFAULT 'scheduled'
@@ -66,6 +71,72 @@ db.serialize(() => {
 
   db.run(
     `
+      ALTER TABLE matches ADD COLUMN match_number INTEGER
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna match_number:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN stage TEXT DEFAULT 'group_stage'
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna stage:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN stadium TEXT
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna stadium:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN city TEXT
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna city:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN country TEXT
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna country:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
+      ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'scheduled'
+    `,
+    (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Erro ao adicionar coluna status:", err.message);
+      }
+    }
+  );
+
+  db.run(
+    `
       ALTER TABLE predictions ADD COLUMN points INTEGER DEFAULT 0
     `,
     (err) => {
@@ -88,17 +159,6 @@ db.serialize(() => {
 
   db.run(
     `
-      ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'scheduled'
-    `,
-    (err) => {
-      if (err && !err.message.includes("duplicate column name")) {
-        console.error("Erro ao adicionar coluna status:", err.message);
-      }
-    }
-  );
-
-  db.run(
-    `
       ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0
     `,
     (err) => {
@@ -107,6 +167,11 @@ db.serialize(() => {
       }
     }
   );
+
+  db.run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_matches_match_number
+    ON matches(match_number)
+  `);
 
   console.log("Tabelas criadas com sucesso!");
 });
