@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
 import GroupMatchesPage from './pages/GroupMatchesPage';
+import RankingPage from './pages/RankingPage';
 
 function App() {
   return (
@@ -35,6 +36,15 @@ function App() {
         element={
           <ProtectedRoute>
             <GroupMatchesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ranking"
+        element={
+          <ProtectedRoute>
+            <RankingPage />
           </ProtectedRoute>
         }
       />

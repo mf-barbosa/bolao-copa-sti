@@ -143,6 +143,17 @@ function GroupsPage() {
     navigate(`/groups/${groupName}`);
   }
 
+  function handleOpenRanking() {
+    const pool = apiPool || selectedPool;
+
+    if (!pool?.id) {
+      setError('Selecione um bolão antes de abrir o ranking.');
+      return;
+    }
+
+    navigate('/ranking');
+  }
+
   function getGroupStatus(group) {
     if (group.live_count > 0) return 'Ao vivo';
     if (group.completed) return 'Completo';
@@ -260,6 +271,10 @@ function GroupsPage() {
         <section className="groups-actions">
           <button type="button" onClick={handleBackToDashboard}>
             Trocar bolão
+          </button>
+
+          <button type="button" onClick={handleOpenRanking}>
+            Ver ranking
           </button>
 
           <button type="button" onClick={handleRefresh} disabled={loading}>
