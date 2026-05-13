@@ -986,6 +986,40 @@ predicted_home_score
 predicted_away_score
 ```
 
+### Validação dos placares
+
+Os campos `predicted_home_score` e `predicted_away_score` devem ser:
+
+```txt
+obrigatórios
+números inteiros
+maiores ou iguais a 0
+menores ou iguais a 99
+```
+
+Exemplos inválidos:
+
+```json
+{
+  "predicted_home_score": -1,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": 1.5,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": "abc",
+  "predicted_away_score": 2
+}
+```
+
 ### Resposta de sucesso
 
 ```json
@@ -1156,6 +1190,40 @@ Authorization: Bearer TOKEN_USUARIO
 ```txt
 predicted_home_score
 predicted_away_score
+```
+
+### Validação dos placares
+
+Os campos `predicted_home_score` e `predicted_away_score` devem ser:
+
+```txt
+obrigatórios
+números inteiros
+maiores ou iguais a 0
+menores ou iguais a 99
+```
+
+Exemplos inválidos:
+
+```json
+{
+  "predicted_home_score": -1,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": 1.5,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": "abc",
+  "predicted_away_score": 2
+}
 ```
 
 ### Resposta de sucesso
@@ -1413,6 +1481,28 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 ```json
 {
   "error": "Não é possível palpitar neste jogo por causa do status atual."
+}
+```
+
+## Placar inválido
+
+```json
+{
+  "error": "predicted_home_score deve ser um número inteiro entre 0 e 99."
+}
+```
+
+Também pode retornar mensagens específicas como:
+
+```json
+{
+  "error": "predicted_home_score não pode ser negativo."
+}
+```
+
+```json
+{
+  "error": "predicted_away_score deve ser menor ou igual a 99."
 }
 ```
 
