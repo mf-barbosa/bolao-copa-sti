@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
+import GroupMatchesPage from './pages/GroupMatchesPage';
 
 function App() {
   return (
@@ -25,6 +26,15 @@ function App() {
         element={
           <ProtectedRoute>
             <GroupsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/groups/:groupName"
+        element={
+          <ProtectedRoute>
+            <GroupMatchesPage />
           </ProtectedRoute>
         }
       />

@@ -140,11 +140,7 @@ function GroupsPage() {
 
   function handleOpenGroup(groupName) {
     localStorage.setItem('bolao_selected_group', groupName);
-
-    setMessage(
-      `Grupo ${groupName} selecionado. Na próxima etapa vamos abrir a tela de palpites desse grupo.`
-    );
-    setError('');
+    navigate(`/groups/${groupName}`);
   }
 
   function getGroupStatus(group) {

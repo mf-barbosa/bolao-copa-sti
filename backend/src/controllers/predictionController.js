@@ -47,6 +47,80 @@ function validatePoolId(pool_id) {
   return poolIdNumber;
 }
 
+function validatePredictionScores(predicted_home_score, predicted_away_score) {
+  const scores = [
+    {
+      field: "predicted_home_score",
+      value: predicted_home_score,
+    },
+    {
+      field: "predicted_away_score",
+      value: predicted_away_score,
+    },
+  ];
+
+  for (const score of scores) {
+    const { field, value } = score;
+
+    if (value === undefined || value === null || value === "") {
+      return {
+        valid: false,
+        error: `${field} é obrigatório.`,
+      };
+    }
+
+    if (typeof value !== "number" && typeof value !== "string") {
+      return {
+        valid: false,
+        error: `${field} deve ser um número inteiro entre 0 e 99.`,
+      };
+    }
+
+    if (typeof value === "string" && value.trim() === "") {
+      return {
+        valid: false,
+        error: `${field} é obrigatório.`,
+      };
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return {
+        valid: false,
+        error: `${field} deve ser um número válido.`,
+      };
+    }
+
+    if (!Number.isInteger(numericValue)) {
+      return {
+        valid: false,
+        error: `${field} deve ser um número inteiro.`,
+      };
+    }
+
+    if (numericValue < 0) {
+      return {
+        valid: false,
+        error: `${field} não pode ser negativo.`,
+      };
+    }
+
+    if (numericValue > 99) {
+      return {
+        valid: false,
+        error: `${field} deve ser menor ou igual a 99.`,
+      };
+    }
+  }
+
+  return {
+    valid: true,
+    homeScore: Number(predicted_home_score),
+    awayScore: Number(predicted_away_score),
+  };
+}
+
 function checkUserInPool(userId, poolId, callback) {
   const query = `
     SELECT * FROM pool_users
@@ -105,12 +179,8 @@ function getDetailedPredictions(whereClause, params, res) {
 exports.createPrediction = (req, res) => {
   const user_id = req.user.id;
 
-  const {
-    match_id,
-    pool_id,
-    predicted_home_score,
-    predicted_away_score,
-  } = req.body;
+  const { match_id, pool_id, predicted_home_score, predicted_away_score } =
+    req.body;
 
   const poolIdNumber = validatePoolId(pool_id);
 
@@ -123,6 +193,17 @@ exports.createPrediction = (req, res) => {
     return res.status(400).json({
       error:
         "match_id, pool_id, predicted_home_score e predicted_away_score são obrigatórios.",
+    });
+  }
+
+  const scoreValidation = validatePredictionScores(
+    predicted_home_score,
+    predicted_away_score
+  );
+
+  if (!scoreValidation.valid) {
+    return res.status(400).json({
+      error: scoreValidation.error,
     });
   }
 
@@ -193,8 +274,8 @@ exports.createPrediction = (req, res) => {
               user_id,
               match_id,
               poolIdNumber,
-              predicted_home_score,
-              predicted_away_score,
+              scoreValidation.homeScore,
+              scoreValidation.awayScore,
             ],
             function (err) {
               if (err) {
@@ -312,6 +393,17 @@ exports.updatePrediction = (req, res) => {
     });
   }
 
+  const scoreValidation = validatePredictionScores(
+    predicted_home_score,
+    predicted_away_score
+  );
+
+  if (!scoreValidation.valid) {
+    return res.status(400).json({
+      error: scoreValidation.error,
+    });
+  }
+
   const getPredictionQuery = `
     SELECT * FROM predictions WHERE id = ?
   `;
@@ -364,7 +456,7 @@ exports.updatePrediction = (req, res) => {
 
       db.run(
         updatePredictionQuery,
-        [predicted_home_score, predicted_away_score, id],
+        [scoreValidation.homeScore, scoreValidation.awayScore, id],
         function (err) {
           if (err) {
             return res.status(500).json({ error: err.message });
