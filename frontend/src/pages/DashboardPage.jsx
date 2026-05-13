@@ -59,6 +59,7 @@ function DashboardPage() {
   function handleLogout() {
     logout();
     localStorage.removeItem('bolao_selected_pool');
+    localStorage.removeItem('bolao_selected_group');
     navigate('/', { replace: true });
   }
 
@@ -116,14 +117,14 @@ function DashboardPage() {
   }
 
   function handleGoToPool() {
-    if (!selectedPool) {
+    const storedPool = localStorage.getItem('bolao_selected_pool');
+
+    if (!selectedPool && !storedPool) {
       setError('Selecione um bolão antes de continuar.');
       return;
     }
 
-    setMessage(
-      `Próxima etapa: abrir tela dos grupos usando pool_id=${selectedPool.id}.`
-    );
+    navigate('/groups');
   }
 
   return (
