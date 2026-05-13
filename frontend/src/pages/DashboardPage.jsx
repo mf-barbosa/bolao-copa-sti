@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
-import { getCurrentUser, logout } from '../auth/authService';
+import { getCurrentUser } from '../auth/authService';
+import AppHeader from '../components/AppHeader';
 
 import '../styles/dashboard.css';
 
@@ -21,7 +22,6 @@ function DashboardPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const userName = user?.name || 'Jogador';
   const isAdmin = Boolean(user?.is_admin);
 
   useEffect(() => {
@@ -54,13 +54,6 @@ function DashboardPage() {
     } finally {
       setLoadingPools(false);
     }
-  }
-
-  function handleLogout() {
-    logout();
-    localStorage.removeItem('bolao_selected_pool');
-    localStorage.removeItem('bolao_selected_group');
-    navigate('/', { replace: true });
   }
 
   function handleSelectPool(pool) {
@@ -129,23 +122,7 @@ function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div>
-          <span className="dashboard-logo">⚽ BolãoCopa STI</span>
-          <p>Copa do Mundo 2026</p>
-        </div>
-
-        <div className="dashboard-user-area">
-          <div className="dashboard-user">
-            <span>Olá,</span>
-            <strong>{userName}</strong>
-          </div>
-
-          <button type="button" onClick={handleLogout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="dashboard-main">
         <section className="dashboard-hero">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getCurrentUser, logout } from '../auth/authService';
+import AppHeader from '../components/AppHeader';
 
 import '../styles/rules.css';
 
@@ -9,8 +9,7 @@ const SCORE_RULES = [
   {
     points: 25,
     title: 'Placar exato',
-    description:
-      'Você acerta exatamente o placar final da partida.',
+    description: 'Você acerta exatamente o placar final da partida.',
     example: 'Palpite: Brasil 2 x 1 Argentina • Resultado: Brasil 2 x 1 Argentina',
     tag: 'Acerto perfeito',
   },
@@ -82,11 +81,7 @@ const GENERAL_RULES = [
 function RulesPage() {
   const navigate = useNavigate();
 
-  const user = getCurrentUser();
-
   const [selectedPool, setSelectedPool] = useState(null);
-
-  const userName = user?.name || 'Jogador';
 
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
@@ -116,40 +111,9 @@ function RulesPage() {
     navigate('/ranking');
   }
 
-  function handleLogout() {
-    logout();
-    localStorage.removeItem('bolao_selected_pool');
-    localStorage.removeItem('bolao_selected_group');
-    navigate('/', { replace: true });
-  }
-
   return (
     <div className="rules-page">
-      <header className="rules-header">
-        <div>
-          <button
-            type="button"
-            className="back-button"
-            onClick={handleBackToGroups}
-          >
-            ← Voltar aos grupos
-          </button>
-
-          <span className="rules-logo">⚽ BolãoCopa STI</span>
-          <p>Copa do Mundo 2026</p>
-        </div>
-
-        <div className="rules-user-area">
-          <div className="rules-user">
-            <span>Olá,</span>
-            <strong>{userName}</strong>
-          </div>
-
-          <button type="button" onClick={handleLogout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <AppHeader backLabel="Voltar aos grupos" onBack={handleBackToGroups} />
 
       <main className="rules-main">
         <section className="rules-hero">

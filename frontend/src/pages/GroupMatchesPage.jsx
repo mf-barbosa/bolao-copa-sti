@@ -2,15 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import api from '../api/api';
-import { getCurrentUser, logout } from '../auth/authService';
+import { logout } from '../auth/authService';
+import AppHeader from '../components/AppHeader';
 
 import '../styles/groupMatches.css';
 
 function GroupMatchesPage() {
   const navigate = useNavigate();
   const { groupName } = useParams();
-
-  const user = getCurrentUser();
 
   const [selectedPool, setSelectedPool] = useState(null);
   const [apiPool, setApiPool] = useState(null);
@@ -22,8 +21,6 @@ function GroupMatchesPage() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
-  const userName = user?.name || 'Jogador';
 
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
@@ -104,10 +101,8 @@ function GroupMatchesPage() {
 
     apiMatches.forEach((match) => {
       initialForms[match.id] = {
-        predicted_home_score:
-          match.prediction?.predicted_home_score ?? '',
-        predicted_away_score:
-          match.prediction?.predicted_away_score ?? '',
+        predicted_home_score: match.prediction?.predicted_home_score ?? '',
+        predicted_away_score: match.prediction?.predicted_away_score ?? '',
       };
     });
 
@@ -120,13 +115,6 @@ function GroupMatchesPage() {
 
   function handleBackToDashboard() {
     navigate('/dashboard');
-  }
-
-  function handleLogout() {
-    logout();
-    localStorage.removeItem('bolao_selected_pool');
-    localStorage.removeItem('bolao_selected_group');
-    navigate('/', { replace: true });
   }
 
   function handleRefresh() {
@@ -175,6 +163,10 @@ function GroupMatchesPage() {
 
     if (homeScore < 0 || awayScore < 0) {
       return 'Os placares não podem ser negativos.';
+    }
+
+    if (homeScore > 99 || awayScore > 99) {
+      return 'Os placares devem ser menores ou iguais a 99.';
     }
 
     return null;
@@ -263,31 +255,7 @@ function GroupMatchesPage() {
 
   return (
     <div className="group-matches-page">
-      <header className="group-matches-header">
-        <div>
-          <button
-            type="button"
-            className="back-button"
-            onClick={handleBackToGroups}
-          >
-            ← Voltar aos grupos
-          </button>
-
-          <span className="group-matches-logo">⚽ BolãoCopa STI</span>
-          <p>Copa do Mundo 2026</p>
-        </div>
-
-        <div className="group-matches-user-area">
-          <div className="group-matches-user">
-            <span>Olá,</span>
-            <strong>{userName}</strong>
-          </div>
-
-          <button type="button" onClick={handleLogout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <AppHeader backLabel="Voltar aos grupos" onBack={handleBackToGroups} />
 
       <main className="group-matches-main">
         <section className="group-matches-hero">
@@ -449,7 +417,9 @@ function GroupMatchesPage() {
                         </p>
                       </div>
 
-                      {hasPrediction && <span className="prediction-badge">Salvo</span>}
+                      {hasPrediction && (
+                        <span className="prediction-badge">Salvo</span>
+                      )}
                     </div>
 
                     <div className="score-form">
@@ -458,6 +428,7 @@ function GroupMatchesPage() {
                         <input
                           type="number"
                           min="0"
+                          max="99"
                           value={form.predicted_home_score}
                           disabled={!canEdit || isSaving}
                           onChange={(event) =>
@@ -477,6 +448,7 @@ function GroupMatchesPage() {
                         <input
                           type="number"
                           min="0"
+                          max="99"
                           value={form.predicted_away_score}
                           disabled={!canEdit || isSaving}
                           onChange={(event) =>

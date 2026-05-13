@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
-import { getCurrentUser, logout } from '../auth/authService';
+import { logout } from '../auth/authService';
+import AppHeader from '../components/AppHeader';
 
 import '../styles/groups.css';
 
@@ -11,8 +12,6 @@ const GROUP_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 function GroupsPage() {
   const navigate = useNavigate();
 
-  const user = getCurrentUser();
-
   const [selectedPool, setSelectedPool] = useState(null);
   const [apiPool, setApiPool] = useState(null);
   const [progress, setProgress] = useState([]);
@@ -20,8 +19,6 @@ function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-
-  const userName = user?.name || 'Jogador';
 
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
@@ -120,13 +117,6 @@ function GroupsPage() {
     navigate('/dashboard');
   }
 
-  function handleLogout() {
-    logout();
-    localStorage.removeItem('bolao_selected_pool');
-    localStorage.removeItem('bolao_selected_group');
-    navigate('/', { replace: true });
-  }
-
   function handleRefresh() {
     const pool = apiPool || selectedPool;
 
@@ -178,31 +168,7 @@ function GroupsPage() {
 
   return (
     <div className="groups-page">
-      <header className="groups-header">
-        <div>
-          <button
-            type="button"
-            className="back-button"
-            onClick={handleBackToDashboard}
-          >
-            ← Voltar
-          </button>
-
-          <span className="groups-logo">⚽ BolãoCopa STI</span>
-          <p>Copa do Mundo 2026</p>
-        </div>
-
-        <div className="groups-user-area">
-          <div className="groups-user">
-            <span>Olá,</span>
-            <strong>{userName}</strong>
-          </div>
-
-          <button type="button" onClick={handleLogout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <AppHeader backLabel="Voltar" onBack={handleBackToDashboard} />
 
       <main className="groups-main">
         <section className="groups-hero">

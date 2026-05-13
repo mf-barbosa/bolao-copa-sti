@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
 import { getCurrentUser, logout } from '../auth/authService';
+import AppHeader from '../components/AppHeader';
 
 import '../styles/ranking.css';
 
@@ -105,13 +106,6 @@ function RankingPage() {
     navigate('/dashboard');
   }
 
-  function handleLogout() {
-    logout();
-    localStorage.removeItem('bolao_selected_pool');
-    localStorage.removeItem('bolao_selected_group');
-    navigate('/', { replace: true });
-  }
-
   function handleRefresh() {
     const pool = apiPool || selectedPool;
 
@@ -144,31 +138,7 @@ function RankingPage() {
 
   return (
     <div className="ranking-page">
-      <header className="ranking-header">
-        <div>
-          <button
-            type="button"
-            className="back-button"
-            onClick={handleBackToGroups}
-          >
-            ← Voltar aos grupos
-          </button>
-
-          <span className="ranking-logo">⚽ BolãoCopa STI</span>
-          <p>Copa do Mundo 2026</p>
-        </div>
-
-        <div className="ranking-user-area">
-          <div className="ranking-user">
-            <span>Olá,</span>
-            <strong>{userName}</strong>
-          </div>
-
-          <button type="button" onClick={handleLogout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <AppHeader backLabel="Voltar aos grupos" onBack={handleBackToGroups} />
 
       <main className="ranking-main">
         <section className="ranking-hero">

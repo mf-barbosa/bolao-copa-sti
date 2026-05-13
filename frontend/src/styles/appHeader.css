@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600;700&display=swap');
+
+:root {
+  --verde: #00a651;
+  --verde-neon: #00ff7a;
+  --vermelho: #e8192c;
+  --azul-light: #1a56c8;
+  --branco: #ffffff;
+  --borda: rgba(255, 255, 255, 0.08);
+}
+
+.app-header {
+  min-height: 86px;
+  padding: 14px 48px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid var(--borda);
+  background: rgba(11, 15, 26, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.app-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.app-back-button {
+  display: inline-flex;
+  margin-bottom: 7px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.app-back-button:hover {
+  color: var(--verde-neon);
+}
+
+.app-logo {
+  display: block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, var(--verde-neon), var(--azul-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-header-left p {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.38);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-nav button {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.58);
+  padding: 9px 15px;
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  transition: 0.2s;
+}
+
+.app-nav button:hover {
+  color: var(--verde-neon);
+  background: rgba(0, 166, 81, 0.08);
+}
+
+.app-nav button.active {
+  color: #000;
+  background: var(--verde-neon);
+}
+
+.app-nav button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-user-area {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.app-user {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.app-user span {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 13px;
+}
+
+.app-user strong {
+  color: var(--verde-neon);
+  font-size: 16px;
+}
+
+.app-user-area > button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--branco);
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: 0.2s;
+}
+
+.app-user-area > button:hover {
+  border-color: var(--vermelho);
+  color: var(--vermelho);
+}
+
+@media (max-width: 1100px) {
+  .app-header {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    padding: 18px 24px;
+  }
+
+  .app-nav {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    border-radius: 14px;
+  }
+
+  .app-user-area {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .app-user {
+    text-align: left;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-nav button {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+}
