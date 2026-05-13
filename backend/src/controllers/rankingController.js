@@ -25,7 +25,7 @@ exports.getRanking = (req, res) => {
     SELECT 
       users.id,
       users.name,
-      users.email AS username,
+      users.email,
       COALESCE(SUM(predictions.points), 0) AS total_points
     FROM users
     LEFT JOIN predictions ON users.id = predictions.user_id
@@ -75,7 +75,7 @@ exports.getRankingByPool = (req, res) => {
         SELECT
           users.id,
           users.name,
-          users.email AS username,
+          users.email,
           COALESCE(SUM(predictions.points), 0) AS total_points
         FROM pool_users
         INNER JOIN users ON users.id = pool_users.user_id

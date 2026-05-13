@@ -270,7 +270,7 @@ function RankingPage() {
                       <div className="ranking-participant">
                         <strong>{participant.name}</strong>
                         <span>
-                          {participant.username}
+                          {participant.name}
                           {isCurrentUser ? ' • você' : ''}
                         </span>
                       </div>

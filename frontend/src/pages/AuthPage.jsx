@@ -15,13 +15,13 @@ function AuthPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const [loginData, setLoginData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
 
   const [registerData, setRegisterData] = useState({
     name: '',
-    username: '',
+    email: '',
     password: '',
     poolCode: '',
   });
@@ -64,11 +64,17 @@ function AuthPage() {
     }));
   }
 
+  function isValidEmail(email) {
+    return email.trim().includes('@');
+  }
+
   function validateLogin() {
     const newErrors = {};
 
-    if (!loginData.username.trim()) {
-      newErrors.loginUsername = 'Informe seu e-mail.';
+    if (!loginData.email.trim()) {
+      newErrors.loginEmail = 'Informe seu e-mail.';
+    } else if (!isValidEmail(loginData.email)) {
+      newErrors.loginEmail = 'Informe um e-mail válido.';
     }
 
     if (!loginData.password.trim()) {
@@ -87,8 +93,10 @@ function AuthPage() {
       newErrors.registerName = 'Escolha um apelido.';
     }
 
-    if (!registerData.username.trim() || !registerData.username.includes('@')) {
-      newErrors.registerUsername = 'Informe um e-mail válido.';
+    if (!registerData.email.trim()) {
+      newErrors.registerEmail = 'Informe seu e-mail.';
+    } else if (!isValidEmail(registerData.email)) {
+      newErrors.registerEmail = 'Informe um e-mail válido.';
     }
 
     if (registerData.password.length < 6) {
@@ -111,7 +119,7 @@ function AuthPage() {
       setLoading(true);
 
       const response = await api.post('/users/login', {
-        username: loginData.username,
+        email: loginData.email,
         password: loginData.password,
       });
 
@@ -125,8 +133,7 @@ function AuthPage() {
       }, 1200);
     } catch (error) {
       setErrors({
-        loginUsername:
-          error.response?.data?.error || 'E-mail ou senha inválidos.',
+        loginEmail: error.response?.data?.error || 'E-mail ou senha inválidos.',
       });
     } finally {
       setLoading(false);
@@ -145,12 +152,12 @@ function AuthPage() {
 
       await api.post('/users', {
         name: registerData.name,
-        username: registerData.username,
+        email: registerData.email,
         password: registerData.password,
       });
 
       const loginResponse = await api.post('/users/login', {
-        username: registerData.username,
+        email: registerData.email,
         password: registerData.password,
       });
 
@@ -167,8 +174,7 @@ function AuthPage() {
       }, 1200);
     } catch (error) {
       setErrors({
-        registerUsername:
-          error.response?.data?.error || 'Erro ao criar conta.',
+        registerEmail: error.response?.data?.error || 'Erro ao criar conta.',
       });
     } finally {
       setLoading(false);
@@ -225,7 +231,7 @@ function AuthPage() {
 
             <div className="auth-stats">
               <div>
-                <strong>32</strong>
+                <strong>48</strong>
                 <small>Seleções</small>
               </div>
 
@@ -270,15 +276,15 @@ function AuthPage() {
                   <label>E-mail</label>
                   <input
                     type="email"
-                    name="username"
+                    name="email"
                     placeholder="seuemail@exemplo.com"
-                    value={loginData.username}
+                    value={loginData.email}
                     onChange={handleLoginChange}
-                    className={errors.loginUsername ? 'input-error-border' : ''}
+                    className={errors.loginEmail ? 'input-error-border' : ''}
                   />
 
-                  {errors.loginUsername && (
-                    <small className="error-text">{errors.loginUsername}</small>
+                  {errors.loginEmail && (
+                    <small className="error-text">{errors.loginEmail}</small>
                   )}
                 </div>
 
@@ -371,18 +377,18 @@ function AuthPage() {
                   <label>E-mail</label>
                   <input
                     type="email"
-                    name="username"
+                    name="email"
                     placeholder="seuemail@exemplo.com"
-                    value={registerData.username}
+                    value={registerData.email}
                     onChange={handleRegisterChange}
                     className={
-                      errors.registerUsername ? 'input-error-border' : ''
+                      errors.registerEmail ? 'input-error-border' : ''
                     }
                   />
 
-                  {errors.registerUsername && (
+                  {errors.registerEmail && (
                     <small className="error-text">
-                      {errors.registerUsername}
+                      {errors.registerEmail}
                     </small>
                   )}
                 </div>

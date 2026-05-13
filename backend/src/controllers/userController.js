@@ -8,11 +8,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_bolao_copa_sti";
 
 // Criar usuário comum
 exports.createUser = async (req, res) => {
-  const { name, username, password } = req.body;
+  const { name, email, password } = req.body;
 
-  if (!name || !username || !password) {
+  if (!name || !email || !password) {
     return res.status(400).json({
-      error: "Nome, username e senha são obrigatórios.",
+      error: "Nome, email e senha são obrigatórios.",
     });
   }
 
@@ -24,11 +24,11 @@ exports.createUser = async (req, res) => {
       VALUES (?, ?, ?, 0)
     `;
 
-    db.run(query, [name, username, hashedPassword], function (err) {
+    db.run(query, [name, email, hashedPassword], function (err) {
       if (err) {
         if (err.message.includes("UNIQUE constraint failed")) {
           return res.status(409).json({
-            error: "Este username já está em uso.",
+            error: "Este email já está em uso.",
           });
         }
 
@@ -49,11 +49,11 @@ exports.createUser = async (req, res) => {
 
 // Login de usuário
 exports.loginUser = (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
+  if (!email || !password) {
     return res.status(400).json({
-      error: "Username e senha são obrigatórios.",
+      error: "Email e senha são obrigatórios.",
     });
   }
 
@@ -61,14 +61,14 @@ exports.loginUser = (req, res) => {
     SELECT * FROM users WHERE email = ?
   `;
 
-  db.get(query, [username], async (err, user) => {
+  db.get(query, [email], async (err, user) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
 
     if (!user) {
       return res.status(401).json({
-        error: "Usuário ou senha inválidos.",
+        error: "Email ou senha inválidos.",
       });
     }
 
@@ -102,14 +102,14 @@ exports.loginUser = (req, res) => {
 
       if (!passwordMatches) {
         return res.status(401).json({
-          error: "Usuário ou senha inválidos.",
+          error: "Email ou senha inválidos.",
         });
       }
 
       const token = jwt.sign(
         {
           id: user.id,
-          username: user.email,
+          email: user.email,
           is_admin: user.is_admin,
         },
         JWT_SECRET,
@@ -124,7 +124,7 @@ exports.loginUser = (req, res) => {
         user: {
           id: user.id,
           name: user.name,
-          username: user.email,
+          email: user.email,
           is_admin: user.is_admin,
         },
       });
@@ -141,7 +141,7 @@ exports.getMe = (req, res) => {
   const userId = req.user.id;
 
   const query = `
-    SELECT id, name, email AS username, is_admin
+    SELECT id, name, email, is_admin
     FROM users
     WHERE id = ?
   `;
@@ -166,7 +166,7 @@ exports.getMe = (req, res) => {
 // Listar usuários — apenas admin
 exports.getUsers = (req, res) => {
   const query = `
-    SELECT id, name, email AS username, is_admin
+    SELECT id, name, email, is_admin
     FROM users
     ORDER BY id ASC
   `;

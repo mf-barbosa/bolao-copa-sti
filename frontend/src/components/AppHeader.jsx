@@ -4,10 +4,7 @@ import { getCurrentUser, logout } from '../auth/authService';
 
 import '../styles/appHeader.css';
 
-function AppHeader({
-  backLabel,
-  onBack,
-}) {
+function AppHeader({ backLabel, onBack }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -83,7 +80,11 @@ function AppHeader({
         </button>
 
         {isAdmin && (
-          <button type="button" disabled title="Será implementado na área admin">
+          <button
+            type="button"
+            className={isActive('/admin') ? 'active' : ''}
+            onClick={() => handleNavigate('/admin')}
+          >
             Gerenciar
           </button>
         )}
