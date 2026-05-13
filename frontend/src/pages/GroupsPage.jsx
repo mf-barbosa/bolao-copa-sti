@@ -154,6 +154,10 @@ function GroupsPage() {
     navigate('/ranking');
   }
 
+  function handleOpenRules() {
+    navigate('/rules');
+  }
+
   function getGroupStatus(group) {
     if (group.live_count > 0) return 'Ao vivo';
     if (group.completed) return 'Completo';
@@ -275,6 +279,10 @@ function GroupsPage() {
 
           <button type="button" onClick={handleOpenRanking}>
             Ver ranking
+          </button>
+
+          <button type="button" onClick={handleOpenRules}>
+            Ver regras
           </button>
 
           <button type="button" onClick={handleRefresh} disabled={loading}>

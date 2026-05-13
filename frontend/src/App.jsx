@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
 import GroupMatchesPage from './pages/GroupMatchesPage';
 import RankingPage from './pages/RankingPage';
+import RulesPage from './pages/RulesPage';
 
 function App() {
   return (
@@ -45,6 +46,15 @@ function App() {
         element={
           <ProtectedRoute>
             <RankingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/rules"
+        element={
+          <ProtectedRoute>
+            <RulesPage />
           </ProtectedRoute>
         }
       />
