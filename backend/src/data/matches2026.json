@@ -1,1 +1,722 @@
-[]
+[
+  {
+    "match_number": 1,
+    "home_team": "México",
+    "away_team": "África do Sul",
+    "match_date": "2026-06-11 16:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 2,
+    "home_team": "Coreia do Sul",
+    "away_team": "República Tcheca",
+    "match_date": "2026-06-11 23:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 3,
+    "home_team": "Canadá",
+    "away_team": "Bósnia e Herzegovina",
+    "match_date": "2026-06-12 16:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 4,
+    "home_team": "Estados Unidos",
+    "away_team": "Paraguai",
+    "match_date": "2026-06-12 22:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 5,
+    "home_team": "Austrália",
+    "away_team": "Turquia",
+    "match_date": "2026-06-13 01:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 6,
+    "home_team": "Catar",
+    "away_team": "Suíça",
+    "match_date": "2026-06-13 16:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 7,
+    "home_team": "Brasil",
+    "away_team": "Marrocos",
+    "match_date": "2026-06-13 19:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 8,
+    "home_team": "Haiti",
+    "away_team": "Escócia",
+    "match_date": "2026-06-13 22:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 9,
+    "home_team": "Alemanha",
+    "away_team": "Curaçao",
+    "match_date": "2026-06-14 16:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 10,
+    "home_team": "Países Baixos",
+    "away_team": "Japão",
+    "match_date": "2026-06-14 17:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 11,
+    "home_team": "Costa do Marfim",
+    "away_team": "Equador",
+    "match_date": "2026-06-14 20:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 12,
+    "home_team": "Suécia",
+    "away_team": "Tunísia",
+    "match_date": "2026-06-14 23:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 13,
+    "home_team": "Espanha",
+    "away_team": "Cabo Verde",
+    "match_date": "2026-06-15 13:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 14,
+    "home_team": "Bélgica",
+    "away_team": "Egito",
+    "match_date": "2026-06-15 16:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 15,
+    "home_team": "Arábia Saudita",
+    "away_team": "Uruguai",
+    "match_date": "2026-06-15 19:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 16,
+    "home_team": "Irã",
+    "away_team": "Nova Zelândia",
+    "match_date": "2026-06-15 22:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 17,
+    "home_team": "França",
+    "away_team": "Senegal",
+    "match_date": "2026-06-16 16:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 18,
+    "home_team": "Iraque",
+    "away_team": "Noruega",
+    "match_date": "2026-06-16 19:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 19,
+    "home_team": "Argentina",
+    "away_team": "Argélia",
+    "match_date": "2026-06-16 22:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 20,
+    "home_team": "Áustria",
+    "away_team": "Jordânia",
+    "match_date": "2026-06-17 01:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 21,
+    "home_team": "Portugal",
+    "away_team": "RD Congo",
+    "match_date": "2026-06-17 14:00",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 22,
+    "home_team": "Inglaterra",
+    "away_team": "Croácia",
+    "match_date": "2026-06-17 17:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 23,
+    "home_team": "Gana",
+    "away_team": "Panamá",
+    "match_date": "2026-06-17 20:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 24,
+    "home_team": "Uzbequistão",
+    "away_team": "Colômbia",
+    "match_date": "2026-06-17 23:00",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 25,
+    "home_team": "República Tcheca",
+    "away_team": "África do Sul",
+    "match_date": "2026-06-18 13:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 26,
+    "home_team": "Suíça",
+    "away_team": "Bósnia e Herzegovina",
+    "match_date": "2026-06-18 16:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 27,
+    "home_team": "Canadá",
+    "away_team": "Catar",
+    "match_date": "2026-06-18 19:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 28,
+    "home_team": "México",
+    "away_team": "Coreia do Sul",
+    "match_date": "2026-06-18 22:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 29,
+    "home_team": "Turquia",
+    "away_team": "Paraguai",
+    "match_date": "2026-06-19 01:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 30,
+    "home_team": "Estados Unidos",
+    "away_team": "Austrália",
+    "match_date": "2026-06-19 16:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 31,
+    "home_team": "Escócia",
+    "away_team": "Marrocos",
+    "match_date": "2026-06-19 19:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 32,
+    "home_team": "Brasil",
+    "away_team": "Haiti",
+    "match_date": "2026-06-19 22:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 33,
+    "home_team": "Países Baixos",
+    "away_team": "Suécia",
+    "match_date": "2026-06-20 14:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 34,
+    "home_team": "Alemanha",
+    "away_team": "Costa do Marfim",
+    "match_date": "2026-06-20 17:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 35,
+    "home_team": "Equador",
+    "away_team": "Curaçao",
+    "match_date": "2026-06-20 21:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 36,
+    "home_team": "Tunísia",
+    "away_team": "Japão",
+    "match_date": "2026-06-21 01:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 37,
+    "home_team": "Espanha",
+    "away_team": "Arábia Saudita",
+    "match_date": "2026-06-21 13:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 38,
+    "home_team": "Bélgica",
+    "away_team": "Irã",
+    "match_date": "2026-06-21 16:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 39,
+    "home_team": "Uruguai",
+    "away_team": "Cabo Verde",
+    "match_date": "2026-06-21 19:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 40,
+    "home_team": "Nova Zelândia",
+    "away_team": "Egito",
+    "match_date": "2026-06-21 22:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 41,
+    "home_team": "França",
+    "away_team": "Iraque",
+    "match_date": "2026-06-21 23:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 42,
+    "home_team": "Argentina",
+    "away_team": "Áustria",
+    "match_date": "2026-06-22 14:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 43,
+    "home_team": "Noruega",
+    "away_team": "Senegal",
+    "match_date": "2026-06-22 21:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 44,
+    "home_team": "Jordânia",
+    "away_team": "Argélia",
+    "match_date": "2026-06-23 00:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 45,
+    "home_team": "Portugal",
+    "away_team": "Uzbequistão",
+    "match_date": "2026-06-23 14:00",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 46,
+    "home_team": "Inglaterra",
+    "away_team": "Gana",
+    "match_date": "2026-06-23 17:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 47,
+    "home_team": "Panamá",
+    "away_team": "Croácia",
+    "match_date": "2026-06-23 20:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 48,
+    "home_team": "Colômbia",
+    "away_team": "RD Congo",
+    "match_date": "2026-06-23 23:00",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 49,
+    "home_team": "Suíça",
+    "away_team": "Canadá",
+    "match_date": "2026-06-24 16:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 50,
+    "home_team": "Bósnia e Herzegovina",
+    "away_team": "Catar",
+    "match_date": "2026-06-24 16:00",
+    "group_name": "B",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 51,
+    "home_team": "Escócia",
+    "away_team": "Brasil",
+    "match_date": "2026-06-24 19:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 52,
+    "home_team": "Marrocos",
+    "away_team": "Haiti",
+    "match_date": "2026-06-24 19:00",
+    "group_name": "C",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 53,
+    "home_team": "República Tcheca",
+    "away_team": "México",
+    "match_date": "2026-06-24 22:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 54,
+    "home_team": "África do Sul",
+    "away_team": "Coreia do Sul",
+    "match_date": "2026-06-24 22:00",
+    "group_name": "A",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 55,
+    "home_team": "Equador",
+    "away_team": "Alemanha",
+    "match_date": "2026-06-25 17:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 56,
+    "home_team": "Curaçao",
+    "away_team": "Costa do Marfim",
+    "match_date": "2026-06-25 17:00",
+    "group_name": "E",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 57,
+    "home_team": "Japão",
+    "away_team": "Suécia",
+    "match_date": "2026-06-25 20:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 58,
+    "home_team": "Tunísia",
+    "away_team": "Países Baixos",
+    "match_date": "2026-06-25 20:00",
+    "group_name": "F",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 59,
+    "home_team": "Turquia",
+    "away_team": "Estados Unidos",
+    "match_date": "2026-06-25 23:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 60,
+    "home_team": "Paraguai",
+    "away_team": "Austrália",
+    "match_date": "2026-06-25 23:00",
+    "group_name": "D",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 61,
+    "home_team": "Noruega",
+    "away_team": "França",
+    "match_date": "2026-06-26 16:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 62,
+    "home_team": "Senegal",
+    "away_team": "Iraque",
+    "match_date": "2026-06-26 16:00",
+    "group_name": "I",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 63,
+    "home_team": "Cabo Verde",
+    "away_team": "Arábia Saudita",
+    "match_date": "2026-06-26 21:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 64,
+    "home_team": "Uruguai",
+    "away_team": "Espanha",
+    "match_date": "2026-06-26 21:00",
+    "group_name": "H",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 65,
+    "home_team": "Egito",
+    "away_team": "Irã",
+    "match_date": "2026-06-27 00:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 66,
+    "home_team": "Nova Zelândia",
+    "away_team": "Bélgica",
+    "match_date": "2026-06-27 00:00",
+    "group_name": "G",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 67,
+    "home_team": "Panamá",
+    "away_team": "Inglaterra",
+    "match_date": "2026-06-27 18:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 68,
+    "home_team": "Croácia",
+    "away_team": "Gana",
+    "match_date": "2026-06-27 18:00",
+    "group_name": "L",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 69,
+    "home_team": "Colômbia",
+    "away_team": "Portugal",
+    "match_date": "2026-06-27 20:30",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 70,
+    "home_team": "RD Congo",
+    "away_team": "Uzbequistão",
+    "match_date": "2026-06-27 20:30",
+    "group_name": "K",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 71,
+    "home_team": "Argélia",
+    "away_team": "Áustria",
+    "match_date": "2026-06-27 23:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  },
+  {
+    "match_number": 72,
+    "home_team": "Jordânia",
+    "away_team": "Argentina",
+    "match_date": "2026-06-27 23:00",
+    "group_name": "J",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null
+  }
+]
