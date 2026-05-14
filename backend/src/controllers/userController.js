@@ -6,11 +6,27 @@ const db = require("../database/database");
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_bolao_copa_sti";
 
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function formatUserResponse(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    username: user.email,
+    is_admin: Number(user.is_admin) === 1 ? 1 : 0,
+  };
+}
+
 // Criar usuário comum
 exports.createUser = async (req, res) => {
   const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!name || !normalizedEmail || !password) {
     return res.status(400).json({
       error: "Nome, email e senha são obrigatórios.",
     });
@@ -24,7 +40,7 @@ exports.createUser = async (req, res) => {
       VALUES (?, ?, ?, 0)
     `;
 
-    db.run(query, [name, email, hashedPassword], function (err) {
+    db.run(query, [name.trim(), normalizedEmail, hashedPassword], function (err) {
       if (err) {
         if (err.message.includes("UNIQUE constraint failed")) {
           return res.status(409).json({
@@ -51,7 +67,9 @@ exports.createUser = async (req, res) => {
 exports.loginUser = (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !password) {
     return res.status(400).json({
       error: "Email e senha são obrigatórios.",
     });
@@ -61,7 +79,7 @@ exports.loginUser = (req, res) => {
     SELECT * FROM users WHERE email = ?
   `;
 
-  db.get(query, [email], async (err, user) => {
+  db.get(query, [normalizedEmail], async (err, user) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -83,7 +101,6 @@ exports.loginUser = (req, res) => {
       if (isHashedPassword) {
         passwordMatches = await bcrypt.compare(password, user.password);
       } else {
-        // Compatibilidade com usuários antigos criados antes do bcrypt
         passwordMatches = password === user.password;
 
         if (passwordMatches) {
@@ -106,11 +123,13 @@ exports.loginUser = (req, res) => {
         });
       }
 
+      const formattedUser = formatUserResponse(user);
+
       const token = jwt.sign(
         {
-          id: user.id,
-          email: user.email,
-          is_admin: user.is_admin,
+          id: formattedUser.id,
+          email: formattedUser.email,
+          is_admin: formattedUser.is_admin,
         },
         JWT_SECRET,
         {
@@ -121,12 +140,7 @@ exports.loginUser = (req, res) => {
       return res.json({
         message: "Login realizado com sucesso",
         token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          is_admin: user.is_admin,
-        },
+        user: formattedUser,
       });
     } catch (error) {
       return res.status(500).json({
@@ -158,7 +172,7 @@ exports.getMe = (req, res) => {
     }
 
     return res.json({
-      user,
+      user: formatUserResponse(user),
     });
   });
 };
@@ -166,7 +180,12 @@ exports.getMe = (req, res) => {
 // Listar usuários — apenas admin
 exports.getUsers = (req, res) => {
   const query = `
-    SELECT id, name, email, is_admin
+    SELECT
+      id,
+      name,
+      email,
+      email AS username,
+      is_admin
     FROM users
     ORDER BY id ASC
   `;
@@ -176,6 +195,8 @@ exports.getUsers = (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
-    return res.json(rows);
+    const users = rows.map(formatUserResponse);
+
+    return res.json(users);
   });
 };

@@ -14,7 +14,7 @@ http://localhost:3000
 
 O sistema permite:
 
-- cadastro e login de usuários com e-mail;
+- cadastro e login de usuários;
 - autenticação com token JWT;
 - separação entre usuário comum e administrador;
 - criação de bolões por código;
@@ -49,35 +49,7 @@ O token é retornado no login.
 
 ---
 
-# 3. Usuário, e-mail e apelido
-
-O sistema usa dois dados principais para o usuário:
-
-```txt
-email → usado para login, identificação interna e futura recuperação de senha
-name  → apelido/nome exibido no bolão e no ranking
-```
-
-Exemplo:
-
-```json
-{
-  "name": "Matheus",
-  "email": "matheus@email.com",
-  "password": "123456"
-}
-```
-
-No frontend:
-
-- o campo visual pode ser chamado de **apelido no bolão**;
-- esse campo deve ser enviado para o backend como `name`;
-- o campo de login deve ser `email`;
-- ranking e header devem exibir preferencialmente `name`.
-
----
-
-# 4. Tipos de usuário
+# 3. Tipos de usuário
 
 ## Usuário comum
 
@@ -105,7 +77,7 @@ Pode:
 
 ---
 
-# 5. Status dos jogos
+# 4. Status dos jogos
 
 Status aceitos:
 
@@ -129,7 +101,7 @@ cancelled  → jogo cancelado, palpites bloqueados
 
 ---
 
-# 6. Regras de pontuação
+# 5. Regras de pontuação
 
 ```txt
 Placar exato: 25 pontos
@@ -142,7 +114,7 @@ Nenhum acerto: 0 pontos
 
 ---
 
-# 7. Rota inicial
+# 6. Rota inicial
 
 ## Verificar se o backend está rodando
 
@@ -160,9 +132,9 @@ Resposta esperada:
 
 ---
 
-# 8. Usuários
+# 7. Usuários
 
-## 8.1 Criar usuário comum
+## 7.1 Criar usuário comum
 
 ```txt
 POST /users
@@ -175,7 +147,7 @@ Não requer token.
 ```json
 {
   "name": "João Silva",
-  "email": "joao@email.com",
+  "username": "joao",
   "password": "123456"
 }
 ```
@@ -184,7 +156,7 @@ Não requer token.
 
 ```txt
 name
-email
+username
 password
 ```
 
@@ -206,7 +178,7 @@ Exemplo enviado:
 ```json
 {
   "name": "Teste Admin Falso",
-  "email": "adminfalso@email.com",
+  "username": "adminfalso",
   "password": "123456",
   "is_admin": 1
 }
@@ -222,7 +194,7 @@ Usuário salvo:
 
 ---
 
-## 8.2 Login
+## 7.2 Login
 
 ```txt
 POST /users/login
@@ -234,7 +206,7 @@ Não requer token.
 
 ```json
 {
-  "email": "joao@email.com",
+  "username": "joao",
   "password": "123456"
 }
 ```
@@ -242,7 +214,7 @@ Não requer token.
 ### Campos obrigatórios
 
 ```txt
-email
+username
 password
 ```
 
@@ -255,7 +227,7 @@ password
   "user": {
     "id": 2,
     "name": "João Silva",
-    "email": "joao@email.com",
+    "username": "joao",
     "is_admin": 0
   }
 }
@@ -278,7 +250,7 @@ Authorization: Bearer TOKEN_JWT_AQUI
 
 ---
 
-## 8.3 Buscar usuário logado
+## 7.3 Buscar usuário logado
 
 ```txt
 GET /users/me
@@ -299,7 +271,7 @@ Authorization: Bearer TOKEN_AQUI
   "user": {
     "id": 2,
     "name": "João Silva",
-    "email": "joao@email.com",
+    "username": "joao",
     "is_admin": 0
   }
 }
@@ -312,12 +284,11 @@ Essa rota serve para:
 - confirmar se o token ainda é válido;
 - saber quem está logado;
 - saber se o usuário é admin;
-- mostrar ou esconder a aba `Gerenciar`;
-- recuperar o `name` para exibir no header/ranking.
+- mostrar ou esconder a aba `Gerenciar`.
 
 ---
 
-## 8.4 Listar usuários
+## 7.4 Listar usuários
 
 ```txt
 GET /users
@@ -338,13 +309,13 @@ Authorization: Bearer TOKEN_ADMIN
   {
     "id": 1,
     "name": "Matheus Barbosa",
-    "email": "matheus@email.com",
+    "username": "matheus",
     "is_admin": 0
   },
   {
     "id": 3,
     "name": "Administrador STI",
-    "email": "admin@sti.com",
+    "username": "admin",
     "is_admin": 1
   }
 ]
@@ -352,9 +323,9 @@ Authorization: Bearer TOKEN_ADMIN
 
 ---
 
-# 9. Bolões
+# 8. Bolões
 
-## 9.1 Criar bolão
+## 8.1 Criar bolão
 
 ```txt
 POST /pools
@@ -410,7 +381,7 @@ sti2026 → STI2026
 
 ---
 
-## 9.2 Entrar em bolão por código
+## 8.2 Entrar em bolão por código
 
 ```txt
 POST /pools/join
@@ -422,7 +393,6 @@ Requer token.
 
 ```txt
 Authorization: Bearer TOKEN_USUARIO
-Content-Type: application/json
 ```
 
 ### Body
@@ -431,12 +401,6 @@ Content-Type: application/json
 {
   "code": "STI2026"
 }
-```
-
-### Campos obrigatórios
-
-```txt
-code
 ```
 
 ### Resposta de sucesso
@@ -471,17 +435,9 @@ Bolão não encontrado:
 }
 ```
 
-Token não enviado:
-
-```json
-{
-  "error": "Token não informado."
-}
-```
-
 ---
 
-## 9.3 Listar meus bolões
+## 8.3 Listar meus bolões
 
 ```txt
 GET /pools/me
@@ -505,38 +461,17 @@ Authorization: Bearer TOKEN_USUARIO
     "code": "STI2026",
     "created_by_admin_id": 3,
     "created_at": "2026-05-10 14:30:00"
-  },
-  {
-    "id": 2,
-    "name": "Bolão Amigos",
-    "code": "AMIGOS2026",
-    "created_by_admin_id": 3,
-    "created_at": "2026-05-10 15:00:00"
   }
 ]
 ```
 
 ### Uso no frontend
 
-Essa rota deve ser usada depois do login para mostrar quais bolões o usuário participa.
-
-Fluxo recomendado:
-
-```txt
-Usuário faz login
-↓
-Frontend chama GET /pools/me
-↓
-Se o usuário já participa de bolões, mostra lista para selecionar
-↓
-Se não participa, mostra tela para inserir código do bolão
-↓
-Após selecionar um bolão, salvar o pool_id selecionado
-```
+Essa rota deve ser usada para a tela de seleção de bolão.
 
 ---
 
-## 9.4 Listar todos os bolões
+## 8.4 Listar todos os bolões
 
 ```txt
 GET /pools
@@ -567,7 +502,7 @@ Authorization: Bearer TOKEN_ADMIN
 
 ---
 
-# 10. Jogos
+# 9. Jogos
 
 Os jogos são globais. Ou seja, todos os bolões usam os mesmos jogos.
 
@@ -575,7 +510,7 @@ Os palpites e rankings são separados por bolão.
 
 ---
 
-## 10.1 Listar todos os jogos
+## 9.1 Listar todos os jogos
 
 ```txt
 GET /matches
@@ -607,7 +542,7 @@ Não requer token.
 
 ---
 
-## 10.2 Filtrar jogos por grupo
+## 9.2 Filtrar jogos por grupo
 
 ```txt
 GET /matches?group_name=A
@@ -623,7 +558,7 @@ GET /matches?group_name=B
 
 ---
 
-## 10.3 Filtrar jogos por status
+## 9.3 Filtrar jogos por status
 
 ```txt
 GET /matches?status=scheduled
@@ -639,7 +574,7 @@ GET /matches?status=finished
 
 ---
 
-## 10.4 Filtrar jogos por grupo e status
+## 9.4 Filtrar jogos por grupo e status
 
 ```txt
 GET /matches?group_name=A&status=scheduled
@@ -649,7 +584,7 @@ Não requer token.
 
 ---
 
-## 10.5 Resumo dos grupos
+## 9.5 Resumo dos grupos
 
 ```txt
 GET /matches/groups
@@ -688,7 +623,7 @@ Pode ser usado para mostrar resumo geral dos grupos.
 
 ---
 
-## 10.6 Progresso de palpites por grupo
+## 9.6 Progresso de palpites por grupo
 
 ```txt
 GET /matches/groups/progress?pool_id=1
@@ -748,7 +683,7 @@ Grupo C — 0/6 palpites feitos
 
 ---
 
-## 10.7 Listar jogos de um grupo com palpites do usuário
+## 9.7 Listar jogos de um grupo com palpites do usuário
 
 ```txt
 GET /matches/group/:groupName?pool_id=1
@@ -835,7 +770,7 @@ Ela retorna:
 
 ---
 
-## 10.8 Criar jogo
+## 9.8 Criar jogo
 
 ```txt
 POST /matches
@@ -880,7 +815,7 @@ group_name
 
 ---
 
-## 10.9 Atualizar resultado do jogo
+## 9.9 Atualizar resultado do jogo
 
 ```txt
 PUT /matches/:id/result
@@ -946,7 +881,7 @@ Ao lançar resultado:
 
 ---
 
-## 10.10 Atualizar status do jogo
+## 9.10 Atualizar status do jogo
 
 ```txt
 PUT /matches/:id/status
@@ -993,7 +928,7 @@ Authorization: Bearer TOKEN_ADMIN
 
 ---
 
-# 11. Palpites
+# 10. Palpites
 
 ## Regra principal
 
@@ -1017,7 +952,7 @@ Brasil 1 x 1 Argentina
 
 ---
 
-## 11.1 Criar palpite
+## 10.1 Criar palpite
 
 ```txt
 POST /predictions
@@ -1051,6 +986,40 @@ predicted_home_score
 predicted_away_score
 ```
 
+### Validação dos placares
+
+Os campos `predicted_home_score` e `predicted_away_score` devem ser:
+
+```txt
+obrigatórios
+números inteiros
+maiores ou iguais a 0
+menores ou iguais a 99
+```
+
+Exemplos inválidos:
+
+```json
+{
+  "predicted_home_score": -1,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": 1.5,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": "abc",
+  "predicted_away_score": 2
+}
+```
+
 ### Resposta de sucesso
 
 ```json
@@ -1080,7 +1049,7 @@ predicted_away_score
 
 ---
 
-## 11.2 Listar palpites
+## 10.2 Listar palpites
 
 ```txt
 GET /predictions
@@ -1115,7 +1084,7 @@ GET /predictions?pool_id=1
     "id": 4,
     "user_id": 2,
     "user_name": "João Silva",
-    "user_email": "joao@email.com",
+    "username": "joao",
     "match_id": 1,
     "pool_id": 1,
     "pool_name": "Bolão STI",
@@ -1137,7 +1106,7 @@ GET /predictions?pool_id=1
 
 ---
 
-## 11.3 Listar meus palpites
+## 10.3 Listar meus palpites
 
 ```txt
 GET /predictions/me
@@ -1165,7 +1134,7 @@ GET /predictions/me?pool_id=1
     "id": 4,
     "user_id": 2,
     "user_name": "João Silva",
-    "user_email": "joao@email.com",
+    "username": "joao",
     "match_id": 1,
     "pool_id": 1,
     "pool_name": "Bolão STI",
@@ -1187,7 +1156,7 @@ GET /predictions/me?pool_id=1
 
 ---
 
-## 11.4 Editar palpite
+## 10.4 Editar palpite
 
 ```txt
 PUT /predictions/:id
@@ -1223,6 +1192,40 @@ predicted_home_score
 predicted_away_score
 ```
 
+### Validação dos placares
+
+Os campos `predicted_home_score` e `predicted_away_score` devem ser:
+
+```txt
+obrigatórios
+números inteiros
+maiores ou iguais a 0
+menores ou iguais a 99
+```
+
+Exemplos inválidos:
+
+```json
+{
+  "predicted_home_score": -1,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": 1.5,
+  "predicted_away_score": 2
+}
+```
+
+```json
+{
+  "predicted_home_score": "abc",
+  "predicted_away_score": 2
+}
+```
+
 ### Resposta de sucesso
 
 ```json
@@ -1241,9 +1244,9 @@ predicted_away_score
 
 ---
 
-# 12. Ranking
+# 11. Ranking
 
-## 12.1 Ranking global
+## 11.1 Ranking global
 
 ```txt
 GET /ranking
@@ -1260,7 +1263,7 @@ Não é a rota principal para o frontend final, porque agora o sistema trabalha 
   {
     "id": 2,
     "name": "João Silva",
-    "email": "joao@email.com",
+    "username": "joao",
     "total_points": 50
   }
 ]
@@ -1268,7 +1271,7 @@ Não é a rota principal para o frontend final, porque agora o sistema trabalha 
 
 ---
 
-## 12.2 Ranking por bolão
+## 11.2 Ranking por bolão
 
 ```txt
 GET /ranking/:poolId
@@ -1301,13 +1304,13 @@ Authorization: Bearer TOKEN_USUARIO
     {
       "id": 2,
       "name": "João Silva",
-      "email": "joao@email.com",
+      "username": "joao",
       "total_points": 50
     },
     {
       "id": 3,
       "name": "Administrador STI",
-      "email": "admin@sti.com",
+      "username": "admin",
       "total_points": 0
     }
   ]
@@ -1320,20 +1323,9 @@ Authorization: Bearer TOKEN_USUARIO
 - admin pode visualizar qualquer ranking;
 - ranking soma apenas os pontos daquele bolão.
 
-### Observação para o frontend
-
-No ranking, recomenda-se exibir principalmente:
-
-```txt
-name
-total_points
-```
-
-O campo `email` pode ser usado internamente, mas não precisa aparecer publicamente para todos os participantes.
-
 ---
 
-# 13. Importação de jogos reais da Copa 2026
+# 12. Importação de jogos reais da Copa 2026
 
 O projeto está preparado para importar jogos por arquivo.
 
@@ -1398,11 +1390,11 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 
 ---
 
-# 14. Fluxo principal para o usuário
+# 13. Fluxo principal para o usuário
 
 ```txt
-1. Usuário cria conta com name, email e password
-2. Usuário faz login com email e password
+1. Usuário cria conta
+2. Usuário faz login
 3. Frontend salva token
 4. Frontend consulta GET /users/me
 5. Usuário entra em um bolão por código
@@ -1419,10 +1411,10 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 
 ---
 
-# 15. Fluxo principal para o admin
+# 14. Fluxo principal para o admin
 
 ```txt
-1. Admin faz login com email e password
+1. Admin faz login
 2. Frontend identifica is_admin = 1
 3. Admin cria bolões
 4. Admin cria/importa jogos
@@ -1433,7 +1425,7 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 
 ---
 
-# 16. Erros comuns
+# 15. Erros comuns
 
 ## Token não enviado
 
@@ -1492,9 +1484,31 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 }
 ```
 
+## Placar inválido
+
+```json
+{
+  "error": "predicted_home_score deve ser um número inteiro entre 0 e 99."
+}
+```
+
+Também pode retornar mensagens específicas como:
+
+```json
+{
+  "error": "predicted_home_score não pode ser negativo."
+}
+```
+
+```json
+{
+  "error": "predicted_away_score deve ser menor ou igual a 99."
+}
+```
+
 ---
 
-# 17. Endpoints mais importantes para o Frontend MVP
+# 16. Endpoints mais importantes para o Frontend MVP
 
 ## Login
 
@@ -1502,29 +1516,10 @@ O campo `match_number` é único. Se o script for rodado novamente com o mesmo `
 POST /users/login
 ```
 
-Body:
-
-```json
-{
-  "email": "joao@email.com",
-  "password": "123456"
-}
-```
-
 ## Cadastro
 
 ```txt
 POST /users
-```
-
-Body:
-
-```json
-{
-  "name": "João Silva",
-  "email": "joao@email.com",
-  "password": "123456"
-}
 ```
 
 ## Usuário logado
@@ -1577,7 +1572,7 @@ GET /ranking/:poolId
 
 ---
 
-# 18. Observações para o frontend
+# 17. Observações para o frontend
 
 ## Token
 
@@ -1585,26 +1580,6 @@ Após login, salvar o token e enviar em rotas protegidas:
 
 ```txt
 Authorization: Bearer TOKEN_AQUI
-```
-
-## Usuário logado
-
-O objeto `user` retornado no login e no `GET /users/me` possui este formato:
-
-```json
-{
-  "id": 2,
-  "name": "João Silva",
-  "email": "joao@email.com",
-  "is_admin": 0
-}
-```
-
-Uso recomendado:
-
-```txt
-user.name  → exibir no header, ranking e saudação
-user.email → usar para login, conta e identificação técnica
 ```
 
 ## Bolão selecionado
@@ -1642,16 +1617,13 @@ A Copa 2026 usa mais grupos do que o formato antigo. O frontend deve estar prepa
 
 ---
 
-# 19. Checklist de integração do frontend
+# 18. Checklist de integração do frontend
 
 ```txt
-[ ] Criar tela de cadastro usando POST /users com name, email e password
-[ ] Criar tela de login usando POST /users/login com email e password
+[ ] Criar tela de cadastro usando POST /users
+[ ] Criar tela de login usando POST /users/login
 [ ] Salvar token após login
-[ ] Salvar user após login
 [ ] Consultar GET /users/me ao carregar a aplicação
-[ ] Exibir user.name no header/ranking
-[ ] Usar user.email apenas como dado de conta/login
 [ ] Criar tela para entrar em bolão por código
 [ ] Listar bolões com GET /pools/me
 [ ] Guardar pool_id selecionado

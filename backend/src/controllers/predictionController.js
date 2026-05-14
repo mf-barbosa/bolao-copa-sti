@@ -40,11 +40,101 @@ function canUserPredict(match) {
 function validatePoolId(pool_id) {
   const poolIdNumber = Number(pool_id);
 
-  if (!pool_id || Number.isNaN(poolIdNumber)) {
+  if (!pool_id || Number.isNaN(poolIdNumber) || poolIdNumber <= 0) {
     return null;
   }
 
   return poolIdNumber;
+}
+
+function validateId(id) {
+  const idNumber = Number(id);
+
+  if (!id || Number.isNaN(idNumber) || idNumber <= 0) {
+    return null;
+  }
+
+  return idNumber;
+}
+
+function validatePredictionScores(predicted_home_score, predicted_away_score) {
+  const scores = [
+    {
+      field: "predicted_home_score",
+      label: "predicted_home_score",
+      value: predicted_home_score,
+    },
+    {
+      field: "predicted_away_score",
+      label: "predicted_away_score",
+      value: predicted_away_score,
+    },
+  ];
+
+  const normalizedScores = {};
+
+  for (const score of scores) {
+    const { field, label, value } = score;
+
+    if (value === undefined || value === null || value === "") {
+      return {
+        valid: false,
+        error: `${label} é obrigatório.`,
+      };
+    }
+
+    if (typeof value !== "number" && typeof value !== "string") {
+      return {
+        valid: false,
+        error: `${label} deve ser um número inteiro entre 0 e 99.`,
+      };
+    }
+
+    if (typeof value === "string" && value.trim() === "") {
+      return {
+        valid: false,
+        error: `${label} é obrigatório.`,
+      };
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return {
+        valid: false,
+        error: `${label} deve ser um número válido.`,
+      };
+    }
+
+    if (!Number.isInteger(numericValue)) {
+      return {
+        valid: false,
+        error: `${label} deve ser um número inteiro.`,
+      };
+    }
+
+    if (numericValue < 0) {
+      return {
+        valid: false,
+        error: `${label} não pode ser negativo.`,
+      };
+    }
+
+    if (numericValue > 99) {
+      return {
+        valid: false,
+        error: `${label} deve ser menor ou igual a 99.`,
+      };
+    }
+
+    normalizedScores[field] = numericValue;
+  }
+
+  return {
+    valid: true,
+    homeScore: normalizedScores.predicted_home_score,
+    awayScore: normalizedScores.predicted_away_score,
+  };
 }
 
 function checkUserInPool(userId, poolId, callback) {
@@ -112,10 +202,11 @@ exports.createPrediction = (req, res) => {
     predicted_away_score,
   } = req.body;
 
+  const matchIdNumber = validateId(match_id);
   const poolIdNumber = validatePoolId(pool_id);
 
   if (
-    !match_id ||
+    !matchIdNumber ||
     !poolIdNumber ||
     predicted_home_score === undefined ||
     predicted_away_score === undefined
@@ -126,11 +217,22 @@ exports.createPrediction = (req, res) => {
     });
   }
 
+  const scoreValidation = validatePredictionScores(
+    predicted_home_score,
+    predicted_away_score
+  );
+
+  if (!scoreValidation.valid) {
+    return res.status(400).json({
+      error: scoreValidation.error,
+    });
+  }
+
   const getMatchQuery = `
     SELECT * FROM matches WHERE id = ?
   `;
 
-  db.get(getMatchQuery, [match_id], (err, match) => {
+  db.get(getMatchQuery, [matchIdNumber], (err, match) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -167,7 +269,7 @@ exports.createPrediction = (req, res) => {
 
       db.get(
         checkExistingPredictionQuery,
-        [user_id, match_id, poolIdNumber],
+        [user_id, matchIdNumber, poolIdNumber],
         (err, existingPrediction) => {
           if (err) {
             return res.status(500).json({ error: err.message });
@@ -191,10 +293,10 @@ exports.createPrediction = (req, res) => {
             insertPredictionQuery,
             [
               user_id,
-              match_id,
+              matchIdNumber,
               poolIdNumber,
-              predicted_home_score,
-              predicted_away_score,
+              scoreValidation.homeScore,
+              scoreValidation.awayScore,
             ],
             function (err) {
               if (err) {
@@ -303,6 +405,14 @@ exports.updatePrediction = (req, res) => {
 
   const { predicted_home_score, predicted_away_score } = req.body;
 
+  const predictionIdNumber = validateId(id);
+
+  if (!predictionIdNumber) {
+    return res.status(400).json({
+      error: "id do palpite inválido.",
+    });
+  }
+
   if (
     predicted_home_score === undefined ||
     predicted_away_score === undefined
@@ -312,11 +422,22 @@ exports.updatePrediction = (req, res) => {
     });
   }
 
+  const scoreValidation = validatePredictionScores(
+    predicted_home_score,
+    predicted_away_score
+  );
+
+  if (!scoreValidation.valid) {
+    return res.status(400).json({
+      error: scoreValidation.error,
+    });
+  }
+
   const getPredictionQuery = `
     SELECT * FROM predictions WHERE id = ?
   `;
 
-  db.get(getPredictionQuery, [id], (err, prediction) => {
+  db.get(getPredictionQuery, [predictionIdNumber], (err, prediction) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -364,7 +485,11 @@ exports.updatePrediction = (req, res) => {
 
       db.run(
         updatePredictionQuery,
-        [predicted_home_score, predicted_away_score, id],
+        [
+          scoreValidation.homeScore,
+          scoreValidation.awayScore,
+          predictionIdNumber,
+        ],
         function (err) {
           if (err) {
             return res.status(500).json({ error: err.message });
