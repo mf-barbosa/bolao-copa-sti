@@ -4,6 +4,11 @@ function normalizeCode(code) {
   return String(code).trim().toUpperCase();
 }
 
+function isValidId(id) {
+  const numberId = Number(id);
+  return !Number.isNaN(numberId) && numberId > 0;
+}
+
 // Criar bolão
 exports.createPool = (req, res) => {
   const { name, code } = req.body;
@@ -33,27 +38,14 @@ exports.createPool = (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
-    const poolId = this.lastID;
-
-    const insertPoolUserQuery = `
-      INSERT OR IGNORE INTO pool_users (pool_id, user_id, created_at)
-      VALUES (?, ?, datetime('now'))
-    `;
-
-    db.run(insertPoolUserQuery, [poolId, adminId], (err) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-
-      return res.status(201).json({
-        message: "Bolão criado com sucesso.",
-        pool: {
-          id: poolId,
-          name,
-          code: normalizedCode,
-          created_by_admin_id: adminId,
-        },
-      });
+    return res.status(201).json({
+      message: "Bolão criado com sucesso.",
+      pool: {
+        id: this.lastID,
+        name,
+        code: normalizedCode,
+        created_by_admin_id: adminId,
+      },
     });
   });
 };
@@ -163,5 +155,205 @@ exports.getAllPools = (req, res) => {
     }
 
     return res.json(rows);
+  });
+};
+
+// Listar participantes de um bolão
+exports.getPoolUsers = (req, res) => {
+  const { poolId } = req.params;
+
+  if (!isValidId(poolId)) {
+    return res.status(400).json({
+      error: "poolId inválido.",
+    });
+  }
+
+  const getPoolQuery = `
+    SELECT * FROM pools WHERE id = ?
+  `;
+
+  db.get(getPoolQuery, [poolId], (err, pool) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!pool) {
+      return res.status(404).json({
+        error: "Bolão não encontrado.",
+      });
+    }
+
+    const query = `
+      SELECT
+        users.id,
+        users.name,
+        users.email,
+        users.is_admin,
+        pool_users.created_at AS joined_at
+      FROM pool_users
+      INNER JOIN users ON users.id = pool_users.user_id
+      WHERE pool_users.pool_id = ?
+      ORDER BY pool_users.created_at ASC
+    `;
+
+    db.all(query, [poolId], (err, users) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      return res.json({
+        pool: {
+          id: pool.id,
+          name: pool.name,
+          code: pool.code,
+        },
+        participants: users,
+      });
+    });
+  });
+};
+
+// Remover usuário de um bolão
+exports.removeUserFromPool = (req, res) => {
+  const { poolId, userId } = req.params;
+
+  if (!isValidId(poolId) || !isValidId(userId)) {
+    return res.status(400).json({
+      error: "poolId e userId devem ser válidos.",
+    });
+  }
+
+  const getMembershipQuery = `
+    SELECT * FROM pool_users
+    WHERE pool_id = ? AND user_id = ?
+  `;
+
+  db.get(getMembershipQuery, [poolId, userId], (err, membership) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Usuário não participa deste bolão.",
+      });
+    }
+
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+
+      const deletePredictionsQuery = `
+        DELETE FROM predictions
+        WHERE pool_id = ? AND user_id = ?
+      `;
+
+      db.run(deletePredictionsQuery, [poolId, userId], (err) => {
+        if (err) {
+          db.run("ROLLBACK");
+          return res.status(500).json({ error: err.message });
+        }
+
+        const deleteMembershipQuery = `
+          DELETE FROM pool_users
+          WHERE pool_id = ? AND user_id = ?
+        `;
+
+        db.run(deleteMembershipQuery, [poolId, userId], function (err) {
+          if (err) {
+            db.run("ROLLBACK");
+            return res.status(500).json({ error: err.message });
+          }
+
+          db.run("COMMIT", (err) => {
+            if (err) {
+              db.run("ROLLBACK");
+              return res.status(500).json({ error: err.message });
+            }
+
+            return res.json({
+              message: "Usuário removido do bolão com sucesso.",
+            });
+          });
+        });
+      });
+    });
+  });
+};
+
+// Excluir bolão
+exports.deletePool = (req, res) => {
+  const { poolId } = req.params;
+
+  if (!isValidId(poolId)) {
+    return res.status(400).json({
+      error: "poolId inválido.",
+    });
+  }
+
+  const getPoolQuery = `
+    SELECT * FROM pools WHERE id = ?
+  `;
+
+  db.get(getPoolQuery, [poolId], (err, pool) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!pool) {
+      return res.status(404).json({
+        error: "Bolão não encontrado.",
+      });
+    }
+
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+
+      const deletePredictionsQuery = `
+        DELETE FROM predictions
+        WHERE pool_id = ?
+      `;
+
+      db.run(deletePredictionsQuery, [poolId], (err) => {
+        if (err) {
+          db.run("ROLLBACK");
+          return res.status(500).json({ error: err.message });
+        }
+
+        const deletePoolUsersQuery = `
+          DELETE FROM pool_users
+          WHERE pool_id = ?
+        `;
+
+        db.run(deletePoolUsersQuery, [poolId], (err) => {
+          if (err) {
+            db.run("ROLLBACK");
+            return res.status(500).json({ error: err.message });
+          }
+
+          const deletePoolQuery = `
+            DELETE FROM pools
+            WHERE id = ?
+          `;
+
+          db.run(deletePoolQuery, [poolId], function (err) {
+            if (err) {
+              db.run("ROLLBACK");
+              return res.status(500).json({ error: err.message });
+            }
+
+            db.run("COMMIT", (err) => {
+              if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: err.message });
+              }
+
+              return res.json({
+                message: "Bolão excluído com sucesso.",
+              });
+            });
+          });
+        });
+      });
+    });
   });
 };
