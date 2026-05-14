@@ -11,6 +11,9 @@ function AdminPage() {
 
   const [pools, setPools] = useState([]);
   const [users, setUsers] = useState([]);
+  const [participants, setParticipants] = useState([]);
+
+  const [selectedPool, setSelectedPool] = useState(null);
 
   const [poolForm, setPoolForm] = useState({
     name: '',
@@ -19,7 +22,11 @@ function AdminPage() {
 
   const [loadingPools, setLoadingPools] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+
   const [creatingPool, setCreatingPool] = useState(false);
+  const [removingUserId, setRemovingUserId] = useState(null);
+  const [deletingPoolId, setDeletingPoolId] = useState(null);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -42,8 +49,7 @@ function AdminPage() {
       setPools(response.data);
     } catch (err) {
       setError(
-        err.response?.data?.error ||
-          'Não foi possível carregar os bolões.'
+        err.response?.data?.error || 'Não foi possível carregar os bolões.'
       );
     } finally {
       setLoadingPools(false);
@@ -60,11 +66,35 @@ function AdminPage() {
       setUsers(response.data);
     } catch (err) {
       setError(
-        err.response?.data?.error ||
-          'Não foi possível carregar os usuários.'
+        err.response?.data?.error || 'Não foi possível carregar os usuários.'
       );
     } finally {
       setLoadingUsers(false);
+    }
+  }
+
+  async function loadPoolParticipants(pool) {
+    if (!pool?.id) {
+      setError('Bolão inválido para carregar participantes.');
+      return;
+    }
+
+    try {
+      setLoadingParticipants(true);
+      setError('');
+      setMessage('');
+
+      const response = await api.get(`/pools/${pool.id}/users`);
+
+      setSelectedPool(response.data.pool);
+      setParticipants(response.data.participants || []);
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          'Não foi possível carregar os participantes do bolão.'
+      );
+    } finally {
+      setLoadingParticipants(false);
     }
   }
 
@@ -118,7 +148,10 @@ function AdminPage() {
         code: poolForm.code.trim().toUpperCase(),
       });
 
-      setMessage(response.data.message || 'Bolão criado com sucesso.');
+      setMessage(
+        response.data.message ||
+          'Bolão criado com sucesso. O administrador não entra automaticamente no bolão.'
+      );
 
       setPoolForm({
         name: '',
@@ -128,18 +161,95 @@ function AdminPage() {
       await loadPools();
     } catch (err) {
       setError(
-        err.response?.data?.error ||
-          'Não foi possível criar o bolão.'
+        err.response?.data?.error || 'Não foi possível criar o bolão.'
       );
     } finally {
       setCreatingPool(false);
     }
   }
 
-  function formatDate(value) {
-    if (!value) return '-';
+  async function handleRemoveUserFromPool(user) {
+    if (!selectedPool?.id || !user?.id) {
+      setError('Selecione um bolão e um usuário válido.');
+      return;
+    }
 
-    return value;
+    const confirmed = window.confirm(
+      `Remover "${user.name}" do bolão "${selectedPool.name}"? Os palpites desse usuário neste bolão também serão removidos.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setRemovingUserId(user.id);
+      setMessage('');
+      setError('');
+
+      const response = await api.delete(
+        `/pools/${selectedPool.id}/users/${user.id}`
+      );
+
+      setMessage(response.data.message || 'Usuário removido do bolão.');
+
+      await Promise.all([loadPoolParticipants(selectedPool), loadPools()]);
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          'Não foi possível remover o usuário do bolão.'
+      );
+    } finally {
+      setRemovingUserId(null);
+    }
+  }
+
+  async function handleDeletePool(pool) {
+    if (!pool?.id) {
+      setError('Bolão inválido para exclusão.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Excluir o bolão "${pool.name}"? Essa ação remove participantes e palpites desse bolão, mas mantém os jogos globais.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingPoolId(pool.id);
+      setMessage('');
+      setError('');
+
+      const response = await api.delete(`/pools/${pool.id}`);
+
+      setMessage(response.data.message || 'Bolão excluído com sucesso.');
+
+      if (selectedPool?.id === pool.id) {
+        setSelectedPool(null);
+        setParticipants([]);
+      }
+
+      await loadPools();
+    } catch (err) {
+      setError(
+        err.response?.data?.error || 'Não foi possível excluir o bolão.'
+      );
+    } finally {
+      setDeletingPoolId(null);
+    }
+  }
+
+  function getUserType(user) {
+    return Number(user.is_admin) === 1 ? 'Admin' : 'Comum';
+  }
+
+  function getParticipantCountText(pool) {
+    const count = Number(pool.participants_count || 0);
+
+    if (count === 1) {
+      return '1 participante';
+    }
+
+    return `${count} participantes`;
   }
 
   return (
@@ -155,7 +265,8 @@ function AdminPage() {
 
             <p className="admin-description">
               Área restrita para administradores criarem bolões, acompanharem
-              participantes e prepararem o gerenciamento completo do sistema.
+              participantes, removerem usuários de bolões e excluírem bolões
+              quando necessário.
             </p>
           </div>
 
@@ -163,8 +274,8 @@ function AdminPage() {
             <span>🛠️</span>
             <strong>Área admin</strong>
             <p>
-              Nesta versão inicial, você já pode criar bolões e visualizar os
-              usuários cadastrados no sistema.
+              Gerencie a estrutura principal do sistema sem alterar os jogos
+              globais da Copa.
             </p>
 
             <div className="admin-summary-grid">
@@ -194,7 +305,9 @@ function AdminPage() {
               <span>🏆</span>
               <div>
                 <h2>Criar bolão</h2>
-                <p>Crie um bolão e compartilhe o código com os participantes.</p>
+                <p>
+                  Crie um bolão e compartilhe o código com os participantes.
+                </p>
               </div>
             </div>
 
@@ -223,6 +336,15 @@ function AdminPage() {
                 {creatingPool ? 'Criando...' : 'Criar bolão'}
               </button>
             </form>
+
+            <div className="admin-info-box">
+              <strong>Importante</strong>
+              <p>
+                Criar um bolão não adiciona automaticamente o administrador como
+                participante. Para participar, use o código do bolão no fluxo
+                normal de entrada.
+              </p>
+            </div>
           </article>
 
           <article className="admin-card">
@@ -230,7 +352,7 @@ function AdminPage() {
               <span>📋</span>
               <div>
                 <h2>Bolões cadastrados</h2>
-                <p>Lista geral dos bolões disponíveis no sistema.</p>
+                <p>Veja participantes ou exclua bolões do sistema.</p>
               </div>
             </div>
 
@@ -250,28 +372,142 @@ function AdminPage() {
 
             {!loadingPools && pools.length > 0 && (
               <div className="admin-list">
-                {pools.map((pool) => (
-                  <article key={pool.id} className="admin-list-item">
-                    <div>
-                      <strong>{pool.name}</strong>
-                      <span>{pool.code}</span>
-                    </div>
+                {pools.map((pool) => {
+                  const isSelected = selectedPool?.id === pool.id;
+                  const isDeleting = deletingPoolId === pool.id;
 
-                    <small>
-                      {pool.participants_count ?? 0} participantes
-                    </small>
-                  </article>
-                ))}
+                  return (
+                    <article
+                      key={pool.id}
+                      className={`admin-list-item ${
+                        isSelected ? 'selected' : ''
+                      }`}
+                    >
+                      <div className="admin-list-main">
+                        <strong>{pool.name}</strong>
+                        <span>{pool.code}</span>
+                        <small>{getParticipantCountText(pool)}</small>
+                      </div>
+
+                      <div className="admin-list-actions">
+                        <button
+                          type="button"
+                          onClick={() => loadPoolParticipants(pool)}
+                        >
+                          Participantes
+                        </button>
+
+                        <button
+                          type="button"
+                          className="danger"
+                          disabled={isDeleting}
+                          onClick={() => handleDeletePool(pool)}
+                        >
+                          {isDeleting ? 'Excluindo...' : 'Excluir'}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+
+          <article className="admin-card participants-card">
+            <div className="admin-card-header">
+              <span>👥</span>
+              <div>
+                <h2>Participantes do bolão</h2>
+                <p>
+                  Selecione um bolão para visualizar e remover participantes.
+                </p>
+              </div>
+            </div>
+
+            {!selectedPool && !loadingParticipants && (
+              <div className="admin-empty">
+                <strong>Nenhum bolão selecionado</strong>
+                <p>
+                  Clique em “Participantes” em algum bolão cadastrado para abrir
+                  a lista.
+                </p>
+              </div>
+            )}
+
+            {loadingParticipants && (
+              <div className="admin-empty">
+                <strong>Carregando participantes...</strong>
+                <p>Aguarde enquanto buscamos os participantes do bolão.</p>
+              </div>
+            )}
+
+            {selectedPool && !loadingParticipants && (
+              <div className="participants-panel">
+                <div className="selected-pool-box">
+                  <div>
+                    <span>Bolão selecionado</span>
+                    <strong>{selectedPool.name}</strong>
+                    <small>{selectedPool.code}</small>
+                  </div>
+
+                  <p>
+                    {participants.length === 1
+                      ? '1 participante'
+                      : `${participants.length} participantes`}
+                  </p>
+                </div>
+
+                {participants.length === 0 && (
+                  <div className="admin-empty">
+                    <strong>Nenhum participante neste bolão</strong>
+                    <p>
+                      Os usuários aparecem aqui depois que entram usando o
+                      código do bolão.
+                    </p>
+                  </div>
+                )}
+
+                {participants.length > 0 && (
+                  <div className="participants-list">
+                    {participants.map((participant) => {
+                      const isRemoving = removingUserId === participant.id;
+
+                      return (
+                        <article
+                          key={participant.id}
+                          className="participant-item"
+                        >
+                          <div>
+                            <strong>{participant.name}</strong>
+                            <span>{participant.email}</span>
+                            <small>{getUserType(participant)}</small>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="danger"
+                            disabled={isRemoving}
+                            onClick={() =>
+                              handleRemoveUserFromPool(participant)
+                            }
+                          >
+                            {isRemoving ? 'Removendo...' : 'Remover'}
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </article>
 
           <article className="admin-card users-card">
             <div className="admin-card-header">
-              <span>👥</span>
+              <span>🧑‍💻</span>
               <div>
                 <h2>Usuários cadastrados</h2>
-                <p>Participantes e administradores do sistema.</p>
+                <p>Participantes e administradores registrados no sistema.</p>
               </div>
             </div>
 
@@ -292,8 +528,8 @@ function AdminPage() {
             {!loadingUsers && users.length > 0 && (
               <div className="admin-table">
                 <div className="admin-table-header">
-                  <span>Nome</span>
-                  <span>Usuário</span>
+                  <span>Nome no bolão</span>
+                  <span>E-mail</span>
                   <span>Tipo</span>
                 </div>
 
@@ -301,7 +537,7 @@ function AdminPage() {
                   <div key={user.id} className="admin-table-row">
                     <span>{user.name}</span>
                     <span>{user.email}</span>
-                    <span>{Number(user.is_admin) === 1 ? 'Admin' : 'Comum'}</span>
+                    <span>{getUserType(user)}</span>
                   </div>
                 ))}
               </div>
@@ -313,14 +549,14 @@ function AdminPage() {
               <span>⚽</span>
               <div>
                 <h2>Próximas funções admin</h2>
-                <p>Funcionalidades que vamos conectar depois.</p>
+                <p>Funcionalidades que ainda podem entrar no painel.</p>
               </div>
             </div>
 
             <div className="admin-roadmap">
               <div>
                 <strong>Jogos</strong>
-                <span>Criar/importar jogos da Copa.</span>
+                <span>Criar, editar e excluir jogos da Copa.</span>
               </div>
 
               <div>
@@ -334,8 +570,8 @@ function AdminPage() {
               </div>
 
               <div>
-                <strong>Ranking</strong>
-                <span>Acompanhar pontuação depois dos resultados.</span>
+                <strong>Auditoria</strong>
+                <span>Registrar alterações importantes feitas por admins.</span>
               </div>
             </div>
           </article>

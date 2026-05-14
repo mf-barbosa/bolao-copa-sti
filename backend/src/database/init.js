@@ -23,10 +23,6 @@ db.serialize(() => {
       away_team TEXT,
       match_date TEXT,
       group_name TEXT,
-      stage TEXT DEFAULT 'group_stage',
-      stadium TEXT,
-      city TEXT,
-      country TEXT,
       home_score INTEGER,
       away_score INTEGER,
       status TEXT DEFAULT 'scheduled'
@@ -69,6 +65,8 @@ db.serialize(() => {
     )
   `);
 
+  // MIGRAÇÕES SEGURAS PARA BANCOS ANTIGOS
+
   db.run(
     `
       ALTER TABLE matches ADD COLUMN match_number INTEGER
@@ -76,50 +74,6 @@ db.serialize(() => {
     (err) => {
       if (err && !err.message.includes("duplicate column name")) {
         console.error("Erro ao adicionar coluna match_number:", err.message);
-      }
-    }
-  );
-
-  db.run(
-    `
-      ALTER TABLE matches ADD COLUMN stage TEXT DEFAULT 'group_stage'
-    `,
-    (err) => {
-      if (err && !err.message.includes("duplicate column name")) {
-        console.error("Erro ao adicionar coluna stage:", err.message);
-      }
-    }
-  );
-
-  db.run(
-    `
-      ALTER TABLE matches ADD COLUMN stadium TEXT
-    `,
-    (err) => {
-      if (err && !err.message.includes("duplicate column name")) {
-        console.error("Erro ao adicionar coluna stadium:", err.message);
-      }
-    }
-  );
-
-  db.run(
-    `
-      ALTER TABLE matches ADD COLUMN city TEXT
-    `,
-    (err) => {
-      if (err && !err.message.includes("duplicate column name")) {
-        console.error("Erro ao adicionar coluna city:", err.message);
-      }
-    }
-  );
-
-  db.run(
-    `
-      ALTER TABLE matches ADD COLUMN country TEXT
-    `,
-    (err) => {
-      if (err && !err.message.includes("duplicate column name")) {
-        console.error("Erro ao adicionar coluna country:", err.message);
       }
     }
   );

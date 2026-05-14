@@ -10,11 +10,34 @@ function isAdminUser(req) {
 function validatePoolId(pool_id) {
   const poolIdNumber = Number(pool_id);
 
-  if (!pool_id || Number.isNaN(poolIdNumber)) {
+  if (!pool_id || Number.isNaN(poolIdNumber) || poolIdNumber <= 0) {
     return null;
   }
 
   return poolIdNumber;
+}
+
+function validateOptionalMatchNumber(match_number) {
+  if (match_number === undefined || match_number === null || match_number === "") {
+    return {
+      valid: true,
+      value: null,
+    };
+  }
+
+  const matchNumber = Number(match_number);
+
+  if (!Number.isInteger(matchNumber) || matchNumber <= 0) {
+    return {
+      valid: false,
+      error: "match_number deve ser um número inteiro positivo.",
+    };
+  }
+
+  return {
+    valid: true,
+    value: matchNumber,
+  };
 }
 
 function checkUserInPool(userId, poolId, callback) {
@@ -69,7 +92,13 @@ function getPredictionStatus(match) {
 
 // Criar jogo
 exports.createMatch = (req, res) => {
-  const { home_team, away_team, match_date, group_name } = req.body;
+  const {
+    match_number,
+    home_team,
+    away_team,
+    match_date,
+    group_name,
+  } = req.body;
 
   if (!home_team || !away_team || !match_date || !group_name) {
     return res.status(400).json({
@@ -77,21 +106,46 @@ exports.createMatch = (req, res) => {
     });
   }
 
+  const matchNumberValidation = validateOptionalMatchNumber(match_number);
+
+  if (!matchNumberValidation.valid) {
+    return res.status(400).json({
+      error: matchNumberValidation.error,
+    });
+  }
+
   const query = `
-    INSERT INTO matches (home_team, away_team, match_date, group_name, status)
-    VALUES (?, ?, ?, ?, 'scheduled')
+    INSERT INTO matches
+    (match_number, home_team, away_team, match_date, group_name, status)
+    VALUES (?, ?, ?, ?, ?, 'scheduled')
   `;
 
-  db.run(query, [home_team, away_team, match_date, group_name], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  db.run(
+    query,
+    [
+      matchNumberValidation.value,
+      home_team,
+      away_team,
+      match_date,
+      group_name,
+    ],
+    function (err) {
+      if (err) {
+        if (err.message.includes("UNIQUE constraint failed")) {
+          return res.status(409).json({
+            error: "Já existe um jogo com este match_number.",
+          });
+        }
 
-    return res.status(201).json({
-      message: "Jogo criado com sucesso.",
-      matchId: this.lastID,
-    });
-  });
+        return res.status(500).json({ error: err.message });
+      }
+
+      return res.status(201).json({
+        message: "Jogo criado com sucesso.",
+        matchId: this.lastID,
+      });
+    }
+  );
 };
 
 // Listar jogos com filtros opcionais
@@ -114,10 +168,22 @@ exports.getMatches = (req, res) => {
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 
   const query = `
-    SELECT *
+    SELECT
+      id,
+      match_number,
+      home_team,
+      away_team,
+      match_date,
+      group_name,
+      status,
+      home_score,
+      away_score
     FROM matches
     ${whereClause}
-    ORDER BY match_date ASC
+    ORDER BY
+      CASE WHEN match_number IS NULL THEN 1 ELSE 0 END,
+      match_number ASC,
+      match_date ASC
   `;
 
   db.all(query, params, (err, rows) => {
@@ -285,6 +351,7 @@ exports.getMatchesByGroupWithPredictions = (req, res) => {
       const query = `
         SELECT
           matches.id,
+          matches.match_number,
           matches.home_team,
           matches.away_team,
           matches.match_date,
@@ -303,7 +370,10 @@ exports.getMatchesByGroupWithPredictions = (req, res) => {
           AND predictions.pool_id = ?
           AND predictions.user_id = ?
         WHERE matches.group_name = ?
-        ORDER BY matches.match_date ASC
+        ORDER BY
+          CASE WHEN matches.match_number IS NULL THEN 1 ELSE 0 END,
+          matches.match_number ASC,
+          matches.match_date ASC
       `;
 
       db.all(query, [poolIdNumber, userId, groupName], (err, rows) => {
@@ -316,6 +386,7 @@ exports.getMatchesByGroupWithPredictions = (req, res) => {
 
           return {
             id: match.id,
+            match_number: match.match_number,
             home_team: match.home_team,
             away_team: match.away_team,
             match_date: match.match_date,
