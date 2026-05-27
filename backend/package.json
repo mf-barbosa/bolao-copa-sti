@@ -1,10 +1,14 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend do Bolão da Copa STI",
   "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed:matches": "node src/scripts/seedMatches2026.js",
+    "reset:matches": "node src/scripts/resetMatches.js",
+    "clear:match-result": "node src/scripts/clearMatchResult.js"
   },
   "keywords": [],
   "author": "",
