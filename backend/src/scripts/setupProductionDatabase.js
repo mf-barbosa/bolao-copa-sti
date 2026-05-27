@@ -1,7 +1,17 @@
+require("dotenv").config();
+
+const bcrypt = require("bcryptjs");
+
 const db = require("../database/database");
 const matches = require("../data/matches2026.json");
 
-const ALLOWED_STATUSES = ["scheduled", "postponed", "live", "finished", "cancelled"];
+const ALLOWED_STATUSES = [
+  "scheduled",
+  "postponed",
+  "live",
+  "finished",
+  "cancelled",
+];
 
 function run(query, params = []) {
   return new Promise((resolve, reject) => {
@@ -27,6 +37,10 @@ function get(query, params = []) {
       resolve(row);
     });
   });
+}
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
 function validateMatch(match, index) {
@@ -60,7 +74,9 @@ function validateMatch(match, index) {
 
   if (!ALLOWED_STATUSES.includes(status)) {
     throw new Error(
-      `Jogo ${matchNumber} possui status inválido. Use: ${ALLOWED_STATUSES.join(", ")}`
+      `Jogo ${matchNumber} possui status inválido. Use: ${ALLOWED_STATUSES.join(
+        ", "
+      )}`
     );
   }
 
@@ -249,6 +265,56 @@ async function seedMatchesIfEmpty() {
   console.log(`${validatedMatches.length} jogos importados no banco.`);
 }
 
+async function createOrUpdateInitialAdmin() {
+  const adminName = String(process.env.ADMIN_NAME || "Admin STI").trim();
+  const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL);
+  const adminPassword = String(process.env.ADMIN_PASSWORD || "").trim();
+
+  if (!adminEmail || !adminPassword) {
+    console.log(
+      "Admin inicial não configurado. Defina ADMIN_EMAIL e ADMIN_PASSWORD para criar/promover um admin automaticamente."
+    );
+    return;
+  }
+
+  const existingUser = await get(
+    `
+      SELECT id, name, email, is_admin
+      FROM users
+      WHERE email = ?
+    `,
+    [adminEmail]
+  );
+
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+  if (!existingUser) {
+    await run(
+      `
+        INSERT INTO users (name, email, password, is_admin)
+        VALUES (?, ?, ?, 1)
+      `,
+      [adminName, adminEmail, hashedPassword]
+    );
+
+    console.log(`Admin inicial criado com sucesso: ${adminEmail}`);
+    return;
+  }
+
+  await run(
+    `
+      UPDATE users
+      SET name = ?,
+          password = ?,
+          is_admin = 1
+      WHERE id = ?
+    `,
+    [adminName || existingUser.name, hashedPassword, existingUser.id]
+  );
+
+  console.log(`Usuário promovido/atualizado como admin: ${adminEmail}`);
+}
+
 async function setupProductionDatabase() {
   try {
     console.log("Preparando banco de dados...");
@@ -256,6 +322,7 @@ async function setupProductionDatabase() {
     await createTables();
     await runSafeMigrations();
     await seedMatchesIfEmpty();
+    await createOrUpdateInitialAdmin();
 
     console.log("Banco de dados pronto.");
   } catch (error) {
