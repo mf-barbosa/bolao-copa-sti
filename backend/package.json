@@ -7,11 +7,12 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node src/scripts/setupProductionDatabase.js && node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:matches": "node src/scripts/seedMatches2026.js",
     "reset:matches": "node src/scripts/resetMatches.js",
-    "clear:match-result": "node src/scripts/clearMatchResult.js"
+    "clear:match-result": "node src/scripts/clearMatchResult.js",
+    "setup:db": "node src/scripts/setupProductionDatabase.js"
   },
   "keywords": [],
   "author": "",
