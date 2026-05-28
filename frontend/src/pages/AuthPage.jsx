@@ -199,15 +199,23 @@ function AuthPage() {
     <div className="auth-page">
       <div className="flag-strip">
         <div className="strip-green" />
-        <div className="strip-yellow" />
         <div className="strip-blue" />
         <div className="strip-white" />
         <div className="strip-red" />
         <div className="strip-green" />
+        <div className="strip-blue" />
       </div>
 
       <nav className="auth-navbar">
-        <span className="auth-logo">⚽ BolãoCopa STI</span>
+        <div className="auth-brand">
+          <img src="/favicon.svg" alt="" className="brand-icon" />
+
+          <div>
+            <span className="auth-logo">CHUTAÍ</span>
+            <small>O Bolão da turma</small>
+          </div>
+        </div>
+
         <span className="auth-nav-text">Copa do Mundo 2026</span>
       </nav>
 
@@ -225,8 +233,8 @@ function AuthPage() {
             </h1>
 
             <p className="auth-description">
-              Faça login, entre no seu bolão e continue fazendo seus palpites.
-              A disputa está só começando.
+              “Faça login, entre na resenha com seus amigos, e mostre que sabe
+              mais que todos.”
             </p>
 
             <div className="auth-stats">
@@ -241,8 +249,8 @@ function AuthPage() {
               </div>
 
               <div>
-                <strong>STI</strong>
-                <small>Bolão</small>
+                <strong>1</strong>
+                <small>Campeão</small>
               </div>
             </div>
           </div>
@@ -478,17 +486,33 @@ function AuthPage() {
       </main>
 
       <footer className="auth-footer">
-        <span>⚽ BolãoCopa STI</span>
-        <p>Feito para a galera da STI • Copa do Mundo 2026</p>
+        <div className="footer-brand">
+          <img src="/favicon.svg" alt="" className="footer-icon" />
+          <span>CHUTAÍ</span>
+        </div>
+
+        <div className="footer-right">
+          <p>© Todos os direitos reservados</p>
+
+          <a
+            href="https://www.instagram.com/matheus.ferreiraz/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram do Dev"
+            className="instagram-link"
+          >
+            <span>◎</span>
+          </a>
+        </div>
       </footer>
 
       <div className="flag-strip">
         <div className="strip-red" />
         <div className="strip-white" />
         <div className="strip-blue" />
-        <div className="strip-yellow" />
         <div className="strip-green" />
         <div className="strip-red" />
+        <div className="strip-blue" />
       </div>
     </div>
   );

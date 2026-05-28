@@ -6,6 +6,7 @@
   --verde-neon: #00ff7a;
   --vermelho: #e8192c;
   --azul: #0033a0;
+  --azul-usa: #002868;
   --azul-light: #1a56c8;
   --branco: #ffffff;
   --fundo: #0b0f1a;
@@ -33,7 +34,7 @@
 }
 
 .strip-yellow {
-  background: #ffd700;
+  display: none;
 }
 
 .strip-blue {
@@ -58,18 +59,43 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 12px rgba(255, 216, 77, 0.22));
+}
+
+.auth-brand div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .auth-logo {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 30px;
+  font-size: 32px;
+  line-height: 0.9;
   letter-spacing: 2px;
-  background: linear-gradient(90deg, var(--verde-neon), var(--azul-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--branco);
+}
+
+.auth-brand small {
+  color: var(--branco);
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.88;
 }
 
 .auth-nav-text {
   font-family: 'Barlow Condensed', sans-serif;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.52);
   text-transform: uppercase;
   letter-spacing: 2px;
   font-weight: 700;
@@ -89,7 +115,7 @@
   align-items: center;
   background:
     radial-gradient(ellipse 90% 70% at 30% 60%, rgba(0, 166, 81, 0.18), transparent 60%),
-    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(0, 51, 160, 0.22), transparent 55%),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(0, 40, 104, 0.34), transparent 55%),
     radial-gradient(ellipse 50% 40% at 10% 10%, rgba(232, 25, 44, 0.1), transparent 50%),
     #0b0f1a;
 }
@@ -143,16 +169,22 @@
   color: var(--verde-neon);
 }
 
+.auth-left h1 span:nth-child(2) {
+  color: var(--azul-usa);
+  text-shadow: 0 0 22px rgba(0, 40, 104, 0.28);
+}
+
 .auth-left h1 span:last-child {
   color: var(--vermelho);
 }
 
 .auth-description {
-  max-width: 420px;
-  color: rgba(255, 255, 255, 0.58);
+  max-width: 430px;
+  color: rgba(255, 255, 255, 0.78);
   font-size: 17px;
-  line-height: 1.7;
-  margin-bottom: 42px;
+  line-height: 1.55;
+  margin-bottom: 38px;
+  font-weight: 500;
 }
 
 .auth-stats {
@@ -163,6 +195,7 @@
 .auth-stats div {
   display: flex;
   flex-direction: column;
+  min-width: 74px;
 }
 
 .auth-stats strong {
@@ -448,16 +481,63 @@
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-icon {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 10px rgba(255, 216, 77, 0.2));
+}
+
 .auth-footer span {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
+  line-height: 1;
   letter-spacing: 2px;
-  color: var(--verde-neon);
+  color: var(--branco);
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .auth-footer p {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.48);
   font-size: 14px;
+  text-transform: lowercase;
+}
+
+.instagram-link {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--branco);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.instagram-link span {
+  color: var(--branco);
+  font-family: Arial, sans-serif;
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.instagram-link:hover {
+  border-color: var(--verde-neon);
+  color: var(--verde-neon);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 255, 122, 0.16);
 }
 
 @media (max-width: 900px) {
@@ -486,7 +566,12 @@
   .auth-footer {
     padding: 20px 24px;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     text-align: center;
+  }
+
+  .footer-right {
+    flex-direction: column;
+    gap: 8px;
   }
 }
