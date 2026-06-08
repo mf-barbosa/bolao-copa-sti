@@ -17,13 +17,18 @@ function GroupsPage() {
   const [selectedPool, setSelectedPool] = useState(null);
   const [apiPool, setApiPool] = useState(null);
   const [progress, setProgress] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [viewMode, setViewMode] = useState('groups');
 
   const [loading, setLoading] = useState(true);
+  const [loadingMatches, setLoadingMatches] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
+
+    loadMatches();
 
     if (!storedPool) {
       setLoading(false);
@@ -58,6 +63,19 @@ function GroupsPage() {
       return indexA - indexB;
     });
   }, [progress]);
+
+  const chronologicalMatches = useMemo(() => {
+    return [...matches].sort((a, b) => {
+      const dateA = parseMatchDate(a.match_date)?.getTime() || 0;
+      const dateB = parseMatchDate(b.match_date)?.getTime() || 0;
+
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+
+      return Number(a.match_number || a.id) - Number(b.match_number || b.id);
+    });
+  }, [matches]);
 
   const summary = useMemo(() => {
     const totalMatches = progress.reduce(
@@ -115,12 +133,74 @@ function GroupsPage() {
     }
   }
 
+  async function loadMatches() {
+    try {
+      setLoadingMatches(true);
+
+      const response = await api.get('/matches');
+
+      setMatches(response.data || []);
+    } catch {
+      setMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  }
+
+  function parseMatchDate(matchDate) {
+    if (!matchDate) {
+      return null;
+    }
+
+    const parsedDate = new Date(String(matchDate).replace(' ', 'T'));
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return parsedDate;
+  }
+
+  function formatMatchDate(matchDate) {
+    const parsedDate = parseMatchDate(matchDate);
+
+    if (!parsedDate) {
+      return 'Data não definida';
+    }
+
+    return parsedDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  function formatStatus(status) {
+    const statusMap = {
+      scheduled: 'Agendado',
+      postponed: 'Adiado',
+      live: 'Ao vivo',
+      finished: 'Finalizado',
+      cancelled: 'Cancelado',
+    };
+
+    return statusMap[status] || status || 'Agendado';
+  }
+
+  function getStatusClass(status) {
+    return `schedule-status status-${status || 'unknown'}`;
+  }
+
   function handleBackToDashboard() {
     navigate('/dashboard');
   }
 
   function handleRefresh() {
     const pool = apiPool || selectedPool;
+
+    loadMatches();
 
     if (!pool?.id) {
       setError('Nenhum bolão selecionado para atualizar.');
@@ -133,6 +213,11 @@ function GroupsPage() {
   function handleOpenGroup(groupName) {
     localStorage.setItem('bolao_selected_group', groupName);
     navigate(`/groups/${groupName}`);
+  }
+
+  function handleOpenMatch(match) {
+    localStorage.setItem('bolao_selected_group', match.group_name);
+    navigate(`/groups/${match.group_name}?match_id=${match.id}`);
   }
 
   function handleOpenRanking() {
@@ -148,6 +233,12 @@ function GroupsPage() {
 
   function handleOpenRules() {
     navigate('/rules');
+  }
+
+  function handleToggleViewMode() {
+    setViewMode((currentMode) =>
+      currentMode === 'groups' ? 'schedule' : 'groups'
+    );
   }
 
   function getGroupStatus(group) {
@@ -175,7 +266,6 @@ function GroupsPage() {
       <main className="groups-main">
         <section className="groups-hero">
           <div>
-
             <h1>Escolha um grupo para fazer seus palpites</h1>
 
             <p className="groups-description">
@@ -244,6 +334,10 @@ function GroupsPage() {
             Trocar bolão
           </button>
 
+          <button type="button" onClick={handleToggleViewMode}>
+            {viewMode === 'groups' ? 'Ver jogos por data' : 'Ver cards dos grupos'}
+          </button>
+
           <button type="button" onClick={handleOpenRanking}>
             Ver ranking
           </button>
@@ -264,7 +358,7 @@ function GroupsPage() {
           </section>
         )}
 
-        {!loading && sortedProgress.length === 0 && !error && (
+        {!loading && viewMode === 'groups' && sortedProgress.length === 0 && !error && (
           <section className="groups-empty">
             <strong>Nenhum grupo encontrado</strong>
             <p>
@@ -273,7 +367,7 @@ function GroupsPage() {
           </section>
         )}
 
-        {!loading && sortedProgress.length > 0 && (
+        {!loading && viewMode === 'groups' && sortedProgress.length > 0 && (
           <section className="groups-grid">
             {sortedProgress.map((group) => {
               const percentage = getGroupPercentage(group);
@@ -346,6 +440,80 @@ function GroupsPage() {
                 </article>
               );
             })}
+          </section>
+        )}
+
+        {!loading && viewMode === 'schedule' && (
+          <section className="schedule-section">
+            <div className="schedule-header">
+              <div>
+                <h2>Jogos em ordem cronológica</h2>
+                <p>
+                  Veja a sequência completa das partidas organizadas por data e
+                  horário.
+                </p>
+              </div>
+
+              <span>{chronologicalMatches.length} jogos</span>
+            </div>
+
+            {loadingMatches && (
+              <section className="groups-empty">
+                <strong>Carregando jogos...</strong>
+                <p>Aguarde enquanto buscamos a tabela da Copa.</p>
+              </section>
+            )}
+
+            {!loadingMatches && chronologicalMatches.length === 0 && (
+              <section className="groups-empty">
+                <strong>Nenhum jogo encontrado</strong>
+                <p>A tabela da Copa ainda não possui jogos cadastrados.</p>
+              </section>
+            )}
+
+            {!loadingMatches && chronologicalMatches.length > 0 && (
+              <div className="schedule-list">
+                {chronologicalMatches.map((match) => (
+                  <article className="schedule-match-card" key={match.id}>
+                    <div className="schedule-match-top">
+                      <div>
+                        <span>
+                          Grupo {match.group_name} • Jogo #{match.match_number || match.id}
+                        </span>
+
+                        <strong>{formatMatchDate(match.match_date)}</strong>
+                      </div>
+
+                      <small className={getStatusClass(match.status)}>
+                        {formatStatus(match.status)}
+                      </small>
+                    </div>
+
+                    <div className="schedule-match-teams">
+                      <div className="schedule-team">
+                        <TeamFlag teamName={match.home_team} size="md" />
+                        <strong>{match.home_team}</strong>
+                      </div>
+
+                      <span className="schedule-versus">x</span>
+
+                      <div className="schedule-team right">
+                        <strong>{match.away_team}</strong>
+                        <TeamFlag teamName={match.away_team} size="md" />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="schedule-prediction-button"
+                      onClick={() => handleOpenMatch(match)}
+                    >
+                      Editar palpite
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </main>

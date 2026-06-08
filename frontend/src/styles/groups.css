@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap');
 
 :root {
   --verde: #00a651;
@@ -275,6 +275,7 @@
   justify-content: flex-end;
   gap: 12px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .groups-actions button {
@@ -495,6 +496,212 @@
   box-shadow: 0 8px 30px rgba(0, 255, 122, 0.2);
 }
 
+.schedule-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(0, 166, 81, 0.1), rgba(26, 86, 200, 0.08)),
+    rgba(17, 24, 39, 0.78);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+}
+
+.schedule-header h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1.7px;
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.schedule-header p {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.schedule-header > span {
+  color: var(--verde-neon);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  white-space: nowrap;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-match-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid var(--borda);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  transition: 0.2s;
+}
+
+.schedule-match-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 255, 122, 0.26);
+}
+
+.schedule-match-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.schedule-match-top div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.schedule-match-top span {
+  color: rgba(255, 255, 255, 0.42);
+  font-family: 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 13px;
+}
+
+.schedule-match-top strong {
+  color: var(--branco);
+  font-size: 17px;
+}
+
+.schedule-match-top small {
+  flex-shrink: 0;
+}
+
+.schedule-match-teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.schedule-team {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.schedule-team.right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.schedule-team strong {
+  overflow: hidden;
+  color: var(--branco);
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-versus {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 166, 81, 0.16);
+  color: var(--verde-neon);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+}
+
+.schedule-status {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.status-scheduled {
+  color: var(--verde-neon);
+  background: rgba(0, 166, 81, 0.1);
+  border: 1px solid rgba(0, 255, 122, 0.2);
+}
+
+.status-postponed {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.22);
+}
+
+.status-live {
+  color: #ff6b7a;
+  background: rgba(232, 25, 44, 0.1);
+  border: 1px solid rgba(232, 25, 44, 0.26);
+}
+
+.status-finished {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.1);
+  border: 1px solid rgba(156, 163, 175, 0.22);
+}
+
+.status-cancelled,
+.status-unknown {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.schedule-prediction-button {
+  width: min(100%, 360px);
+  align-self: center;
+  border: none;
+  border-radius: 8px;
+  background: var(--verde);
+  color: var(--branco);
+  padding: 15px 26px;
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.7px;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.schedule-prediction-button:hover {
+  background: var(--verde-neon);
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 255, 122, 0.22);
+}
+
+.schedule-prediction-button:focus {
+  outline: 2px solid rgba(0, 255, 122, 0.55);
+  outline-offset: 3px;
+}
+
 @media (max-width: 1000px) {
   .groups-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -539,7 +746,38 @@
     flex-direction: column;
   }
 
+  .groups-actions button {
+    width: 100%;
+  }
+
   .group-flags-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .schedule-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .schedule-match-top {
+    flex-direction: column;
+  }
+
+  .schedule-match-teams {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-team.right {
+    justify-content: flex-start;
+    text-align: left;
+    flex-direction: row-reverse;
+  }
+
+  .schedule-versus {
+    margin: 0 auto;
+  }
+
+  .schedule-prediction-button {
+    width: 100%;
   }
 }

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
 import { getCurrentUser } from '../auth/authService';
 import AppHeader from '../components/AppHeader';
+import TeamFlag from '../components/TeamFlag';
 
 import '../styles/dashboard.css';
 
@@ -15,8 +16,10 @@ function DashboardPage() {
   const [poolCode, setPoolCode] = useState('');
   const [pools, setPools] = useState([]);
   const [selectedPool, setSelectedPool] = useState(null);
+  const [matches, setMatches] = useState([]);
 
   const [loadingPools, setLoadingPools] = useState(true);
+  const [loadingMatches, setLoadingMatches] = useState(true);
   const [joiningPool, setJoiningPool] = useState(false);
 
   const [message, setMessage] = useState('');
@@ -36,7 +39,35 @@ function DashboardPage() {
     }
 
     loadMyPools();
+    loadMatches();
   }, []);
+
+  const nextMatch = useMemo(() => {
+    const now = new Date();
+
+    return [...matches]
+      .filter((match) => {
+        const status = match.status || 'scheduled';
+
+        if (status === 'finished' || status === 'cancelled') {
+          return false;
+        }
+
+        const matchDate = parseMatchDate(match.match_date);
+
+        if (!matchDate) {
+          return false;
+        }
+
+        return matchDate >= now;
+      })
+      .sort((a, b) => {
+        const dateA = parseMatchDate(a.match_date)?.getTime() || 0;
+        const dateB = parseMatchDate(b.match_date)?.getTime() || 0;
+
+        return dateA - dateB;
+      })[0] || null;
+  }, [matches]);
 
   async function loadMyPools() {
     try {
@@ -54,6 +85,62 @@ function DashboardPage() {
     } finally {
       setLoadingPools(false);
     }
+  }
+
+  async function loadMatches() {
+    try {
+      setLoadingMatches(true);
+
+      const response = await api.get('/matches');
+
+      setMatches(response.data || []);
+    } catch {
+      setMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  }
+
+  function parseMatchDate(matchDate) {
+    if (!matchDate) {
+      return null;
+    }
+
+    const parsedDate = new Date(String(matchDate).replace(' ', 'T'));
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return parsedDate;
+  }
+
+  function formatMatchDate(matchDate) {
+    const parsedDate = parseMatchDate(matchDate);
+
+    if (!parsedDate) {
+      return 'Data não definida';
+    }
+
+    return parsedDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  function formatStatus(status) {
+    const statusMap = {
+      scheduled: 'Agendado',
+      postponed: 'Adiado',
+      live: 'Ao vivo',
+      finished: 'Finalizado',
+      cancelled: 'Cancelado',
+    };
+
+    return statusMap[status] || status || 'Agendado';
   }
 
   function handleSelectPool(pool) {
@@ -127,7 +214,6 @@ function DashboardPage() {
       <main className="dashboard-main">
         <section className="dashboard-hero">
           <div>
-
             <h1>Escolha seu bolão e entre na disputa</h1>
 
             <p className="dashboard-description">
@@ -243,26 +329,70 @@ function DashboardPage() {
             )}
           </article>
 
-          <article className="dashboard-card">
+          <article className="dashboard-card next-match-card">
             <div className="card-header">
               <span>⚽</span>
               <div>
-                <h2>Próximos jogos</h2>
-                <p>Atalho para os grupos da Copa.</p>
+                <h2>Próximo jogo</h2>
+                <p>Lembrete da próxima partida da Copa.</p>
               </div>
             </div>
 
-            <div className="preview-list">
-              <div>
-                <span>Bolão ativo</span>
-                <strong>{selectedPool ? selectedPool.name : 'Não selecionado'}</strong>
+            {loadingMatches && (
+              <div className="empty-state">
+                <strong>Carregando próximo jogo...</strong>
+                <p>Aguarde enquanto buscamos a tabela da Copa.</p>
               </div>
+            )}
 
-              <div>
-                <span>Próxima tela</span>
-                <strong>Grupos</strong>
+            {!loadingMatches && !nextMatch && (
+              <div className="empty-state">
+                <strong>Nenhum próximo jogo encontrado</strong>
+                <p>Não há partidas futuras cadastradas no momento.</p>
               </div>
-            </div>
+            )}
+
+            {!loadingMatches && nextMatch && (
+              <div className="next-match-box">
+                <div className="next-match-teams">
+                  <div className="next-match-team">
+                    <TeamFlag teamName={nextMatch.home_team} size="lg" />
+                    <strong>{nextMatch.home_team}</strong>
+                  </div>
+
+                  <span className="next-match-versus">x</span>
+
+                  <div className="next-match-team right">
+                    <strong>{nextMatch.away_team}</strong>
+                    <TeamFlag teamName={nextMatch.away_team} size="lg" />
+                  </div>
+                </div>
+
+                <div className="next-match-info">
+                  <div>
+                    <span>Grupo</span>
+                    <strong>{nextMatch.group_name}</strong>
+                  </div>
+
+                  <div>
+                    <span>Jogo</span>
+                    <strong>
+                      #{nextMatch.match_number || nextMatch.id}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Status</span>
+                    <strong>{formatStatus(nextMatch.status)}</strong>
+                  </div>
+                </div>
+
+                <div className="next-match-date">
+                  <span>Data e horário</span>
+                  <strong>{formatMatchDate(nextMatch.match_date)}</strong>
+                </div>
+              </div>
+            )}
           </article>
 
           <article className="dashboard-card">

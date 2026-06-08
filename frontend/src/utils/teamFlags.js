@@ -14,7 +14,10 @@ export const teamFlags = {
   Canada: '/icons/flags/ca.svg',
 
   Bósnia: '/icons/flags/ba.svg',
-  Bosnia: '/icons/flags/ba.svg',
+Bosnia: '/icons/flags/ba.svg',
+'Bósnia e Herzegovina': '/icons/flags/ba.svg',
+'Bosnia e Herzegovina': '/icons/flags/ba.svg',
+'Bosnia and Herzegovina': '/icons/flags/ba.svg',
 
   Catar: '/icons/flags/qa.svg',
   Qatar: '/icons/flags/qa.svg',

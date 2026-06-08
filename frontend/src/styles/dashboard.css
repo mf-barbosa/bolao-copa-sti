@@ -234,6 +234,10 @@
   border-color: rgba(26, 86, 200, 0.2);
 }
 
+.next-match-card {
+  border-color: rgba(0, 255, 122, 0.16);
+}
+
 .card-header {
   display: flex;
   align-items: flex-start;
@@ -399,13 +403,99 @@
   letter-spacing: 1.4px;
 }
 
-.preview-list {
+.next-match-box {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.preview-list div,
+.next-match-teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(0, 166, 81, 0.08), rgba(26, 86, 200, 0.06)),
+    rgba(255, 255, 255, 0.045);
+}
+
+.next-match-team {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.next-match-team.right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.next-match-team strong {
+  overflow: hidden;
+  color: var(--branco);
+  font-size: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-match-versus {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 166, 81, 0.16);
+  color: var(--verde-neon);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+}
+
+.next-match-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.next-match-info div,
+.next-match-date {
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.next-match-info span,
+.next-match-date span,
+.account-box span {
+  display: block;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.next-match-info strong,
+.next-match-date strong,
+.account-box strong {
+  color: var(--verde-neon);
+}
+
+.next-match-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.next-match-date span {
+  margin-bottom: 0;
+}
+
+.next-match-date strong {
+  text-align: right;
+}
+
 .account-box,
 .admin-hint {
   padding: 16px;
@@ -415,18 +505,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-}
-
-.preview-list span,
-.account-box span {
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 14px;
-}
-
-.preview-list strong,
-.account-box strong {
-  color: var(--verde-neon);
-  text-align: right;
 }
 
 .admin-hint {
@@ -473,5 +551,32 @@
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .next-match-teams {
+    grid-template-columns: 1fr;
+  }
+
+  .next-match-team.right {
+    justify-content: flex-start;
+    text-align: left;
+    flex-direction: row-reverse;
+  }
+
+  .next-match-versus {
+    margin: 0 auto;
+  }
+
+  .next-match-info {
+    grid-template-columns: 1fr;
+  }
+
+  .next-match-date {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .next-match-date strong {
+    text-align: left;
   }
 }

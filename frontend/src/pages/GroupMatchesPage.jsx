@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import api from '../api/api';
 import { logout } from '../auth/authService';
@@ -11,6 +11,9 @@ import '../styles/groupMatches.css';
 function GroupMatchesPage() {
   const navigate = useNavigate();
   const { groupName } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const selectedMatchId = searchParams.get('match_id');
 
   const [selectedPool, setSelectedPool] = useState(null);
   const [apiPool, setApiPool] = useState(null);
@@ -43,6 +46,31 @@ function GroupMatchesPage() {
       setError('Não foi possível carregar o bolão selecionado.');
     }
   }, [groupName]);
+
+  useEffect(() => {
+    if (loading || !selectedMatchId || matches.length === 0) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const selectedMatchElement = document.getElementById(
+        `match-${selectedMatchId}`
+      );
+
+      if (selectedMatchElement) {
+        selectedMatchElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+        selectedMatchElement.focus({
+          preventScroll: true,
+        });
+      }
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading, matches, selectedMatchId]);
 
   const summary = useMemo(() => {
     const totalMatches = matches.length;
@@ -365,9 +393,15 @@ function GroupMatchesPage() {
               const hasPrediction = Boolean(match.prediction);
               const isSaving = savingPredictionId === match.id;
               const canEdit = Boolean(match.can_predict);
+              const isSelectedMatch = String(match.id) === selectedMatchId;
 
               return (
-                <article key={match.id} className="match-card">
+                <article
+                  key={match.id}
+                  id={`match-${match.id}`}
+                  tabIndex={isSelectedMatch ? -1 : undefined}
+                  className={`match-card ${isSelectedMatch ? 'match-card-highlight' : ''}`}
+                >
                   <div className="match-card-top">
                     <div>
                       <span>Jogo #{match.id}</span>
