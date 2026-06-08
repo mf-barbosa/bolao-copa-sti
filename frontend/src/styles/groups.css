@@ -14,9 +14,9 @@
 .groups-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(0, 166, 81, 0.15), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(26, 86, 200, 0.18), transparent 34%),
-    var(--fundo);
+    radial-gradient(circle at top left, rgba(0, 80, 58, 0.22), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(7, 18, 34, 0.72), transparent 38%),
+    #07101c;
   color: var(--branco);
   font-family: 'Barlow', sans-serif;
 }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
-import { getCurrentUser } from '../auth/authService';
 import AppHeader from '../components/AppHeader';
 import TeamFlag from '../components/TeamFlag';
 
@@ -10,8 +9,6 @@ import '../styles/dashboard.css';
 
 function DashboardPage() {
   const navigate = useNavigate();
-
-  const user = getCurrentUser();
 
   const [poolCode, setPoolCode] = useState('');
   const [pools, setPools] = useState([]);
@@ -24,8 +21,6 @@ function DashboardPage() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
-  const isAdmin = Boolean(user?.is_admin);
 
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
@@ -391,35 +386,6 @@ function DashboardPage() {
                   <span>Data e horário</span>
                   <strong>{formatMatchDate(nextMatch.match_date)}</strong>
                 </div>
-              </div>
-            )}
-          </article>
-
-          <article className="dashboard-card">
-            <div className="card-header">
-              <span>{isAdmin ? '🛠️' : '👤'}</span>
-              <div>
-                <h2>{isAdmin ? 'Painel admin' : 'Minha conta'}</h2>
-                <p>
-                  {isAdmin
-                    ? 'Você tem permissão administrativa.'
-                    : 'Conta comum de participante.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="account-box">
-              <span>Tipo de usuário</span>
-              <strong>{isAdmin ? 'Administrador' : 'Participante'}</strong>
-            </div>
-
-            {isAdmin && (
-              <div className="admin-hint">
-                <strong>Admin disponível</strong>
-                <p>
-                  O painel administrativo será conectado em uma etapa própria do
-                  frontend.
-                </p>
               </div>
             )}
           </article>
