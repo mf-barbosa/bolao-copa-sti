@@ -34,73 +34,90 @@ function AppHeader({ backLabel, onBack }) {
   }
 
   return (
-    <header className="app-header">
-      <div className="app-header-left">
-        {backLabel && onBack && (
-          <button type="button" className="app-back-button" onClick={onBack}>
-            ← {backLabel}
-          </button>
-        )}
-
-        <span className="app-logo">⚽ BolãoCopa STI</span>
-        <p>Copa do Mundo 2026</p>
+    <>
+      <div className="app-header-strip">
+        <div className="strip-green" />
+        <div className="strip-blue" />
+        <div className="strip-white" />
+        <div className="strip-red" />
+        <div className="strip-green" />
+        <div className="strip-blue" />
       </div>
 
-      <nav className="app-nav">
-        <button
-          type="button"
-          className={isActive('/dashboard') ? 'active' : ''}
-          onClick={() => handleNavigate('/dashboard')}
-        >
-          Início
-        </button>
+      <header className="app-header">
+        <div className="app-header-left">
+          {backLabel && onBack && (
+            <button type="button" className="app-back-button" onClick={onBack}>
+              ← {backLabel}
+            </button>
+          )}
 
-        <button
-          type="button"
-          className={isActive('/groups') ? 'active' : ''}
-          onClick={() => handleNavigate('/groups')}
-        >
-          Grupos
-        </button>
+          <div className="app-brand">
+            <img src="/favicon.svg" alt="" className="app-brand-icon" />
 
-        <button
-          type="button"
-          className={isActive('/ranking') ? 'active' : ''}
-          onClick={() => handleNavigate('/ranking')}
-        >
-          Ranking
-        </button>
-
-        <button
-          type="button"
-          className={isActive('/rules') ? 'active' : ''}
-          onClick={() => handleNavigate('/rules')}
-        >
-          Regras
-        </button>
-
-        {isAdmin && (
-          <button
-            type="button"
-            className={isActive('/admin') ? 'active' : ''}
-            onClick={() => handleNavigate('/admin')}
-          >
-            Gerenciar
-          </button>
-        )}
-      </nav>
-
-      <div className="app-user-area">
-        <div className="app-user">
-          <span>Olá,</span>
-          <strong>{userName}</strong>
+            <div className="app-brand-text">
+              <span className="app-logo">CHUTAÍ</span>
+              <p>O Bolão da turma</p>
+            </div>
+          </div>
         </div>
 
-        <button type="button" onClick={handleLogout}>
-          Sair
-        </button>
-      </div>
-    </header>
+        <nav className="app-nav">
+          <button
+            type="button"
+            className={isActive('/dashboard') ? 'active' : ''}
+            onClick={() => handleNavigate('/dashboard')}
+          >
+            Início
+          </button>
+
+          <button
+            type="button"
+            className={isActive('/groups') ? 'active' : ''}
+            onClick={() => handleNavigate('/groups')}
+          >
+            Grupos
+          </button>
+
+          <button
+            type="button"
+            className={isActive('/ranking') ? 'active' : ''}
+            onClick={() => handleNavigate('/ranking')}
+          >
+            Ranking
+          </button>
+
+          <button
+            type="button"
+            className={isActive('/rules') ? 'active' : ''}
+            onClick={() => handleNavigate('/rules')}
+          >
+            Regras
+          </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              className={isActive('/admin') ? 'active' : ''}
+              onClick={() => handleNavigate('/admin')}
+            >
+              Gerenciar
+            </button>
+          )}
+        </nav>
+
+        <div className="app-user-area">
+          <div className="app-user">
+            <span>Olá,</span>
+            <strong>{userName}</strong>
+          </div>
+
+          <button type="button" onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
+      </header>
+    </>
   );
 }
 

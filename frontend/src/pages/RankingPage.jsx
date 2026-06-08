@@ -143,7 +143,6 @@ function RankingPage() {
       <main className="ranking-main">
         <section className="ranking-hero">
           <div>
-            <p className="ranking-tag">Ranking do bolão</p>
 
             <h1>Classificação geral</h1>
 

@@ -175,7 +175,6 @@ function GroupsPage() {
       <main className="groups-main">
         <section className="groups-hero">
           <div>
-            <p className="groups-tag">Tela compacta dos grupos</p>
 
             <h1>Escolha um grupo para fazer seus palpites</h1>
 

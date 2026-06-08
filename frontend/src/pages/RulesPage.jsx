@@ -118,7 +118,6 @@ function RulesPage() {
       <main className="rules-main">
         <section className="rules-hero">
           <div>
-            <p className="rules-tag">Regras de pontuação</p>
 
             <h1>Entenda como ganhar pontos</h1>
 

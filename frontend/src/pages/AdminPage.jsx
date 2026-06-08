@@ -503,7 +503,6 @@ function AdminPage() {
       <main className="admin-main">
         <section className="admin-hero">
           <div>
-            <p className="admin-tag">Painel administrativo</p>
 
             <h1>Gerenciar bolões e jogos globais</h1>
 
@@ -1014,38 +1013,6 @@ function AdminPage() {
                 ))}
               </div>
             )}
-          </article>
-
-          <article className="admin-card roadmap-card">
-            <div className="admin-card-header">
-              <span>📌</span>
-              <div>
-                <h2>Próximas funções admin</h2>
-                <p>Funcionalidades que ainda podem entrar no painel.</p>
-              </div>
-            </div>
-
-            <div className="admin-roadmap">
-              <div>
-                <strong>Importação</strong>
-                <span>Manter jogos reais pelo arquivo matches2026.json.</span>
-              </div>
-
-              <div>
-                <strong>Auditoria</strong>
-                <span>Registrar alterações importantes feitas por admins.</span>
-              </div>
-
-              <div>
-                <strong>Mata-mata</strong>
-                <span>Adicionar jogos eliminatórios quando os confrontos forem definidos.</span>
-              </div>
-
-              <div>
-                <strong>Automação</strong>
-                <span>Estudar integração futura com API externa de resultados.</span>
-              </div>
-            </div>
           </article>
         </section>
       </main>

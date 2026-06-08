@@ -127,7 +127,6 @@ function DashboardPage() {
       <main className="dashboard-main">
         <section className="dashboard-hero">
           <div>
-            <p className="dashboard-tag">Frontend MVP</p>
 
             <h1>Escolha seu bolão e entre na disputa</h1>
 
