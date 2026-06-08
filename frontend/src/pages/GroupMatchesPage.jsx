@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/api';
 import { logout } from '../auth/authService';
 import AppHeader from '../components/AppHeader';
+import TeamFlag from '../components/TeamFlag';
 
 import '../styles/groupMatches.css';
 
@@ -380,15 +381,27 @@ function GroupMatchesPage() {
 
                   <div className="match-teams">
                     <div className="team-box">
-                      <span>Mandante</span>
-                      <strong>{match.home_team}</strong>
+                      <div className="team-heading">
+                        <span>Mandante</span>
+                      </div>
+
+                      <strong className="team-name">
+                        <TeamFlag teamName={match.home_team} size="lg" />
+                        <span>{match.home_team}</span>
+                      </strong>
                     </div>
 
                     <div className="versus-box">x</div>
 
                     <div className="team-box right">
-                      <span>Visitante</span>
-                      <strong>{match.away_team}</strong>
+                      <div className="team-heading right">
+                        <span>Visitante</span>
+                      </div>
+
+                      <strong className="team-name right">
+                        <span>{match.away_team}</span>
+                        <TeamFlag teamName={match.away_team} size="lg" />
+                      </strong>
                     </div>
                   </div>
 
@@ -424,7 +437,10 @@ function GroupMatchesPage() {
 
                     <div className="score-form">
                       <label>
-                        <span>{match.home_team}</span>
+                        <div className="score-team-label only-flag">
+                          <TeamFlag teamName={match.home_team} size="sm" />
+                        </div>
+
                         <input
                           type="number"
                           min="0"
@@ -444,7 +460,10 @@ function GroupMatchesPage() {
                       <strong>x</strong>
 
                       <label>
-                        <span>{match.away_team}</span>
+                        <div className="score-team-label right only-flag">
+                          <TeamFlag teamName={match.away_team} size="sm" />
+                        </div>
+
                         <input
                           type="number"
                           min="0"

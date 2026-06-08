@@ -417,19 +417,41 @@
   text-align: right;
 }
 
-.team-box span {
+.team-heading {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.team-heading.right {
+  justify-content: flex-end;
+}
+
+.team-heading span {
   display: block;
   color: rgba(255, 255, 255, 0.42);
   font-family: 'Barlow Condensed', sans-serif;
   text-transform: uppercase;
   letter-spacing: 1.4px;
   font-size: 13px;
-  margin-bottom: 8px;
 }
 
-.team-box strong {
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
   font-size: clamp(20px, 3vw, 30px);
   line-height: 1.1;
+}
+
+.team-name.right {
+  justify-content: flex-end;
+}
+
+.team-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .versus-box {
@@ -516,13 +538,27 @@
   gap: 8px;
 }
 
-.score-form label span {
+.score-team-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.score-team-label.right {
+  justify-content: flex-end;
+}
+
+.score-team-label span {
+  overflow: hidden;
   color: rgba(255, 255, 255, 0.5);
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.4px;
   font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .score-form input {
@@ -634,6 +670,20 @@
 
   .team-box.right {
     text-align: left;
+  }
+
+  .team-heading.right,
+  .team-name.right,
+  .score-team-label.right {
+    justify-content: flex-start;
+  }
+
+  .team-name.right {
+    flex-direction: row-reverse;
+  }
+
+  .score-team-label.right {
+    flex-direction: row-reverse;
   }
 
   .versus-box {
