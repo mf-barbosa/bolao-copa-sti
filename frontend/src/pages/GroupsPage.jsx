@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { logout } from '../auth/authService';
 import AppHeader from '../components/AppHeader';
+import TeamFlag from '../components/TeamFlag';
+import { getTeamsByGroup } from '../data/worldCupGroups';
 
 import '../styles/groups.css';
 
@@ -277,6 +279,7 @@ function GroupsPage() {
             {sortedProgress.map((group) => {
               const percentage = getGroupPercentage(group);
               const status = getGroupStatus(group);
+              const groupTeams = getTeamsByGroup(group.group_name);
 
               return (
                 <article
@@ -291,6 +294,20 @@ function GroupsPage() {
 
                     <small>{status}</small>
                   </div>
+
+                  {groupTeams.length > 0 && (
+                    <div
+                      className="group-flags-row"
+                      aria-label={`Bandeiras do Grupo ${group.group_name}`}
+                    >
+                      {groupTeams.map((team) => (
+                        <div className="group-flag-item" key={team}>
+                          <TeamFlag teamName={team} size="md" />
+                          <span>{team}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="group-progress-info">
                     <strong>

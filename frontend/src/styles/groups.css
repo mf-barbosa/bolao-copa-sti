@@ -349,7 +349,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .group-card-header div {
@@ -382,6 +382,39 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+.group-flags-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 20px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.group-flag-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: rgba(11, 15, 26, 0.28);
+}
+
+.group-flag-item span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .group-progress-info {
@@ -504,5 +537,9 @@
 
   .groups-actions {
     flex-direction: column;
+  }
+
+  .group-flags-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

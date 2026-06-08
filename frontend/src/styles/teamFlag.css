@@ -1,0 +1,40 @@
+.team-flag {
+  display: inline-block;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 6px 14px rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  vertical-align: middle;
+}
+
+.team-flag-sm {
+  width: 24px;
+  height: 18px;
+}
+
+.team-flag-md {
+  width: 34px;
+  height: 25px;
+}
+
+.team-flag-lg {
+  width: 46px;
+  height: 34px;
+}
+
+.team-flag-xl {
+  width: 58px;
+  height: 43px;
+}
+
+.team-flag-fallback {
+  display: inline-grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.62);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  line-height: 1;
+}
