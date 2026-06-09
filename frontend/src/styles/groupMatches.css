@@ -710,4 +710,141 @@
     text-align: center;
     padding-bottom: 0;
   }
+@media (max-width: 900px) {
+  .match-teams {
+    grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr) !important;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .team-box {
+    min-height: 120px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .team-box.right {
+    text-align: center;
+  }
+
+  .team-heading {
+    display: none;
+  }
+
+  .team-name {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    text-align: center;
+  }
+
+  .team-name.right {
+    flex-direction: column-reverse !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .team-name span {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  .team-name .team-flag {
+    width: 46px;
+    height: 34px;
+  }
+
+  .versus-box {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto;
+    font-size: 25px;
+  }
+
+  .score-form {
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) !important;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .score-form label {
+    min-width: 0;
+  }
+
+  .score-team-label,
+  .score-team-label.right {
+    justify-content: center !important;
+    align-items: center;
+    flex-direction: row !important;
+    min-height: 34px;
+  }
+
+  .score-team-label.only-flag .team-flag {
+    width: 42px;
+    height: 31px;
+  }
+
+  .score-form input {
+    text-align: center;
+    padding: 14px 10px;
+    font-size: 18px;
+  }
+
+  .score-form > strong {
+    align-self: center;
+    padding-bottom: 0;
+    text-align: center;
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 390px) {
+  .match-teams {
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) !important;
+    gap: 6px;
+  }
+
+  .team-box {
+    min-height: 112px;
+    padding: 12px 8px;
+  }
+
+  .team-name {
+    font-size: 15px;
+  }
+
+  .team-name .team-flag {
+    width: 42px;
+    height: 31px;
+  }
+
+  .versus-box {
+    width: 32px;
+    height: 32px;
+    font-size: 23px;
+  }
+
+  .score-form {
+    grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr) !important;
+    gap: 8px;
+  }
+
+  .score-team-label.only-flag .team-flag {
+    width: 38px;
+    height: 28px;
+  }
+
+  .score-form input {
+    padding: 13px 8px;
+  }
+}
 }

@@ -780,4 +780,83 @@
   .schedule-prediction-button {
     width: 100%;
   }
+  @media (max-width: 800px) {
+  .schedule-match-teams {
+    grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr) !important;
+    gap: 8px;
+    align-items: center;
+    padding: 14px 12px;
+  }
+
+  .schedule-team {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .schedule-team.right {
+    flex-direction: column-reverse !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .schedule-team .team-flag {
+    width: 46px;
+    height: 34px;
+  }
+
+  .schedule-team strong {
+    max-width: 100%;
+    font-size: 17px;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .schedule-versus {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto;
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 390px) {
+  .schedule-match-teams {
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) !important;
+    gap: 6px;
+    padding: 12px 10px;
+  }
+
+  .schedule-team .team-flag {
+    width: 42px;
+    height: 31px;
+  }
+
+  .schedule-team strong {
+    font-size: 15px;
+  }
+
+  .schedule-versus {
+    width: 32px;
+    height: 32px;
+    font-size: 23px;
+  }
+}
+@media (max-width: 800px) {
+  .groups-actions button:nth-of-type(n + 3) {
+    display: none;
+  }
+
+  .groups-actions {
+    gap: 10px;
+  }
+
+  .groups-actions button {
+    width: 100%;
+  }
+}
 }
