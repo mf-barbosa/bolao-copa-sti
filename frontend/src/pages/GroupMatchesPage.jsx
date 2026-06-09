@@ -274,10 +274,39 @@ function GroupMatchesPage() {
     return `status-${status || 'unknown'}`;
   }
 
-  function formatDate(matchDate) {
-    if (!matchDate) return 'Data não definida';
+  function parseMatchDate(matchDate) {
+    if (!matchDate) {
+      return null;
+    }
 
-    return matchDate;
+    const parsedDate = new Date(String(matchDate).replace(' ', 'T'));
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return parsedDate;
+  }
+
+  function formatDate(matchDate) {
+    const parsedDate = parseMatchDate(matchDate);
+
+    if (!parsedDate) {
+      return 'Data não definida';
+    }
+
+    const date = parsedDate.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const time = parsedDate.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `${date} ${time}`;
   }
 
   const currentPool = apiPool || selectedPool;
@@ -289,8 +318,6 @@ function GroupMatchesPage() {
       <main className="group-matches-main">
         <section className="group-matches-hero">
           <div>
-            <p className="group-matches-tag">Palpites por grupo</p>
-
             <h1>Grupo {groupName}</h1>
 
             <p className="group-matches-description">
@@ -400,11 +427,13 @@ function GroupMatchesPage() {
                   key={match.id}
                   id={`match-${match.id}`}
                   tabIndex={isSelectedMatch ? -1 : undefined}
-                  className={`match-card ${isSelectedMatch ? 'match-card-highlight' : ''}`}
+                  className={`match-card ${
+                    isSelectedMatch ? 'match-card-highlight' : ''
+                  }`}
                 >
                   <div className="match-card-top">
                     <div>
-                      <span>Jogo #{match.id}</span>
+                      <span>Jogo #{match.match_number || match.id}</span>
                       <strong>{formatDate(match.match_date)}</strong>
                     </div>
 
@@ -459,7 +488,9 @@ function GroupMatchesPage() {
 
                         <p>
                           {hasPrediction
-                            ? `Pontuação atual: ${match.prediction.points ?? 0} pontos`
+                            ? `Pontuação atual: ${
+                                match.prediction.points ?? 0
+                              } pontos`
                             : 'Informe o placar que você acredita para este jogo.'}
                         </p>
                       </div>
