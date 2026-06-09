@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import api from '../api/api';
 import AppHeader from '../components/AppHeader';
+import TeamFlag from '../components/TeamFlag';
 
 import '../styles/admin.css';
 
@@ -503,7 +504,6 @@ function AdminPage() {
       <main className="admin-main">
         <section className="admin-hero">
           <div>
-
             <h1>Gerenciar bolões e jogos globais</h1>
 
             <p className="admin-description">
@@ -916,7 +916,11 @@ function AdminPage() {
 
                           <div className="result-inputs">
                             <label>
-                              {match.home_team}
+                              <span className="admin-result-team-label">
+                                <TeamFlag teamName={match.home_team} size="sm" />
+                                {match.home_team}
+                              </span>
+
                               <input
                                 type="number"
                                 min="0"
@@ -936,7 +940,11 @@ function AdminPage() {
                             <span>x</span>
 
                             <label>
-                              {match.away_team}
+                              <span className="admin-result-team-label">
+                                <TeamFlag teamName={match.away_team} size="sm" />
+                                {match.away_team}
+                              </span>
+
                               <input
                                 type="number"
                                 min="0"
