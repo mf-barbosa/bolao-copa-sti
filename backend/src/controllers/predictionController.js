@@ -137,6 +137,213 @@ function validatePredictionScores(predicted_home_score, predicted_away_score) {
   };
 }
 
+function dbGet(query, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve(row);
+    });
+  });
+}
+
+function dbRun(query, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function (err) {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve({
+        lastID: this.lastID,
+        changes: this.changes,
+      });
+    });
+  });
+}
+
+function checkUserInPool(userId, poolId, callback) {
+  const query = `
+    SELECT * FROM pool_users
+    WHERE user_id = ? AND pool_id = ?
+  `;
+
+  db.get(query, [userId, poolId], (err, membership) => {
+    if (err) {
+      return callback(err);
+    }
+
+    return callback(null, Boolean(membership));
+  });
+}
+
+function getDetailedPredictions(whereClause, params, res) {
+  const query = `
+    SELECT
+      predictions.id,
+      predictions.user_id,
+      users.name AS user_name,
+      users.email AS user_email,
+      predictions.match_id,
+      predictions.pool_id,
+      pools.name AS pool_name,
+      pools.code AS pool_code,
+      matches.home_team,
+      matches.away_team,
+      matches.match_date,
+      matches.group_name,
+      matches.status AS match_status,
+      matches.home_score,
+      matches.away_score,
+      predictions.predicted_home_score,
+      predictions.predicted_away_score,
+      predictions.points,
+      predictions.created_at
+    FROM predictions
+    LEFT JOIN users ON users.id = predictions.user_id
+    LEFT JOIN matches ON matches.id = predictions.match_id
+    LEFT JOIN pools ON pools.id = predictions.pool_id
+    ${whereClause}
+    ORDER BY predictions.created_at DESC
+  `;
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    return res.json(rows);
+  });
+}
+
+// Criar palpite usando o usuário logado e o bolão informado
+exports.createPrediction = (req, res) => {
+  const user_id = req.user.id;
+
+  const {
+    match_id,
+    pool_id,
+    predicted_home_score,
+    predicted_away_score,
+  } = req.body;
+
+  const matchIdNumber = validateId(match_id);
+  const poolIdNumber = validatePoolId(pool_id);
+
+  if (
+    !matchIdNumber ||
+    !poolIdNumber ||
+    predicted_home_score === undefined ||
+    predicted_away_score === undefined
+  ) {
+    return res.status(400).json({
+      error:
+        "match_id, pool_id, predicted_home_score e predicted_away_score são obrigatórios.",
+    });
+  }
+
+  const scoreValidation = validatePredictionScores(
+    predicted_home_score,
+    predicted_away_score
+  );
+
+  if (!scoreValidation.valid) {
+    return res.status(400).json({
+      error: scoreValidation.error,
+    });
+  }
+
+  const getMatchQuery = `
+    SELECT * FROM matches WHERE id = ?
+  `;
+
+  db.get(getMatchQuery, [matchIdNumber], (err, match) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!match) {
+      return res.status(404).json({
+        error: "Jogo não encontrado.",
+      });
+    }
+
+    const predictionStatus = canUserPredict(match);
+
+    if (!predictionStatus.allowed) {
+      return res.status(403).json({
+        error: predictionStatus.reason,
+      });
+    }
+
+    checkUserInPool(user_id, poolIdNumber, (err, isMember) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!isMember && !isAdminUser(req)) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
+
+      const checkExistingPredictionQuery = `
+        SELECT * FROM predictions
+        WHERE user_id = ? AND match_id = ? AND pool_id = ?
+      `;
+
+      db.get(
+        checkExistingPredictionQuery,
+        [user_id, matchIdNumber, poolIdNumber],
+        (err, existingPrediction) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+
+          if (existingPrediction) {
+            return res.status(409).json({
+              error:
+                "Este usuário já fez um palpite para este jogo neste bolão. Edite o palpite existente.",
+              predictionId: existingPrediction.id,
+            });
+          }
+
+          const insertPredictionQuery = `
+            INSERT INTO predictions
+            (user_id, match_id, pool_id, predicted_home_score, predicted_away_score, created_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
+          `;
+
+          db.run(
+            insertPredictionQuery,
+            [
+              user_id,
+              matchIdNumber,
+              poolIdNumber,
+              scoreValidation.homeScore,
+              scoreValidation.awayScore,
+            ],
+            function (err) {
+              if (err) {
+                return res.status(500).json({ error: err.message });
+              }
+
+              return res.status(201).json({
+                message: "Palpite criado com sucesso.",
+                predictionId: this.lastID,
+              });
+            }
+          );
+        }
+      );
+    });
+  });
+};
+
 // Criar ou atualizar vários palpites de uma vez usando o usuário logado
 exports.bulkUpsertPredictions = async (req, res) => {
   const userId = req.user.id;
@@ -329,186 +536,6 @@ exports.bulkUpsertPredictions = async (req, res) => {
       error: err.message || "Não foi possível salvar os palpites em lote.",
     });
   }
-};
-
-
-
-function checkUserInPool(userId, poolId, callback) {
-  const query = `
-    SELECT * FROM pool_users
-    WHERE user_id = ? AND pool_id = ?
-  `;
-
-  db.get(query, [userId, poolId], (err, membership) => {
-    if (err) {
-      return callback(err);
-    }
-
-    return callback(null, Boolean(membership));
-  });
-}
-
-function getDetailedPredictions(whereClause, params, res) {
-  const query = `
-    SELECT
-      predictions.id,
-      predictions.user_id,
-      users.name AS user_name,
-      users.email AS user_email,
-      predictions.match_id,
-      predictions.pool_id,
-      pools.name AS pool_name,
-      pools.code AS pool_code,
-      matches.home_team,
-      matches.away_team,
-      matches.match_date,
-      matches.group_name,
-      matches.status AS match_status,
-      matches.home_score,
-      matches.away_score,
-      predictions.predicted_home_score,
-      predictions.predicted_away_score,
-      predictions.points,
-      predictions.created_at
-    FROM predictions
-    LEFT JOIN users ON users.id = predictions.user_id
-    LEFT JOIN matches ON matches.id = predictions.match_id
-    LEFT JOIN pools ON pools.id = predictions.pool_id
-    ${whereClause}
-    ORDER BY predictions.created_at DESC
-  `;
-
-  db.all(query, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-
-    return res.json(rows);
-  });
-}
-
-// Criar palpite usando o usuário logado e o bolão informado
-exports.createPrediction = (req, res) => {
-  const user_id = req.user.id;
-
-  const {
-    match_id,
-    pool_id,
-    predicted_home_score,
-    predicted_away_score,
-  } = req.body;
-
-  const matchIdNumber = validateId(match_id);
-  const poolIdNumber = validatePoolId(pool_id);
-
-  if (
-    !matchIdNumber ||
-    !poolIdNumber ||
-    predicted_home_score === undefined ||
-    predicted_away_score === undefined
-  ) {
-    return res.status(400).json({
-      error:
-        "match_id, pool_id, predicted_home_score e predicted_away_score são obrigatórios.",
-    });
-  }
-
-  const scoreValidation = validatePredictionScores(
-    predicted_home_score,
-    predicted_away_score
-  );
-
-  if (!scoreValidation.valid) {
-    return res.status(400).json({
-      error: scoreValidation.error,
-    });
-  }
-
-  const getMatchQuery = `
-    SELECT * FROM matches WHERE id = ?
-  `;
-
-  db.get(getMatchQuery, [matchIdNumber], (err, match) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-
-    if (!match) {
-      return res.status(404).json({
-        error: "Jogo não encontrado.",
-      });
-    }
-
-    const predictionStatus = canUserPredict(match);
-
-    if (!predictionStatus.allowed) {
-      return res.status(403).json({
-        error: predictionStatus.reason,
-      });
-    }
-
-    checkUserInPool(user_id, poolIdNumber, (err, isMember) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-
-      if (!isMember && !isAdminUser(req)) {
-        return res.status(403).json({
-          error: "Usuário não participa deste bolão.",
-        });
-      }
-
-      const checkExistingPredictionQuery = `
-        SELECT * FROM predictions
-        WHERE user_id = ? AND match_id = ? AND pool_id = ?
-      `;
-
-      db.get(
-        checkExistingPredictionQuery,
-        [user_id, matchIdNumber, poolIdNumber],
-        (err, existingPrediction) => {
-          if (err) {
-            return res.status(500).json({ error: err.message });
-          }
-
-          if (existingPrediction) {
-            return res.status(409).json({
-              error:
-                "Este usuário já fez um palpite para este jogo neste bolão. Edite o palpite existente.",
-              predictionId: existingPrediction.id,
-            });
-          }
-
-          const insertPredictionQuery = `
-            INSERT INTO predictions
-            (user_id, match_id, pool_id, predicted_home_score, predicted_away_score, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
-          `;
-
-          db.run(
-            insertPredictionQuery,
-            [
-              user_id,
-              matchIdNumber,
-              poolIdNumber,
-              scoreValidation.homeScore,
-              scoreValidation.awayScore,
-            ],
-            function (err) {
-              if (err) {
-                return res.status(500).json({ error: err.message });
-              }
-
-              return res.status(201).json({
-                message: "Palpite criado com sucesso.",
-                predictionId: this.lastID,
-              });
-            }
-          );
-        }
-      );
-    });
-  });
 };
 
 // Listar palpites
