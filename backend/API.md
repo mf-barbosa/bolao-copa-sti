@@ -1,6 +1,6 @@
-# API - Bolão da Copa STI
+# API - CHUTAÍ / Bolão da Copa STI
 
-Documentação das rotas do backend do projeto **Bolão da Copa STI**.
+Documentação das rotas do backend do projeto **CHUTAÍ - Bolão da Copa STI**.
 
 Base URL local:
 
@@ -23,6 +23,9 @@ O sistema permite:
 - importação de jogos reais via `matches2026.json`;
 - identificação dos jogos por `match_number`;
 - palpites separados por usuário, jogo e bolão;
+- visualização dos jogos em ordem cronológica com os palpites do usuário;
+- edição de palpites direto na tela de jogos por data;
+- salvamento de vários palpites de uma vez por dia de jogos;
 - bloqueio de palpites 30 minutos antes da partida;
 - controle global de status e horário dos jogos;
 - lançamento global de resultado oficial por admin;
@@ -104,8 +107,10 @@ Pode:
 - visualizar seus bolões;
 - selecionar um bolão;
 - visualizar grupos e jogos;
+- visualizar jogos em ordem cronológica;
 - criar palpites;
 - editar seus próprios palpites enquanto estiver liberado;
+- salvar vários palpites de uma vez pela tela de jogos por data;
 - visualizar ranking dos bolões em que participa;
 - visualizar regras de pontuação.
 
@@ -992,10 +997,10 @@ pool_id
     {
       "id": 2,
       "match_number": 2,
-      "home_team": "Espanha",
-      "away_team": "Cabo Verde",
-      "match_date": "2026-06-11 19:00",
-      "group_name": "B",
+      "home_team": "Coreia do Sul",
+      "away_team": "República Tcheca",
+      "match_date": "2026-06-11 23:00",
+      "group_name": "A",
       "home_score": null,
       "away_score": null,
       "status": "scheduled",
@@ -1020,7 +1025,114 @@ Essa rota retorna:
 
 ---
 
-## 10.8 Criar jogo manualmente
+
+## 10.8 Listar jogos em ordem cronológica com palpites do usuário
+
+```txt
+GET /matches/schedule?pool_id=1
+```
+
+Requer token.
+
+### Header
+
+```txt
+Authorization: Bearer TOKEN_USUARIO
+```
+
+### Query obrigatória
+
+```txt
+pool_id
+```
+
+### Exemplo
+
+```txt
+GET /matches/schedule?pool_id=1
+```
+
+### Resposta de sucesso
+
+```json
+{
+  "pool": {
+    "id": 1,
+    "name": "Bolão STI",
+    "code": "STI2026"
+  },
+  "matches": [
+    {
+      "id": 1,
+      "match_number": 1,
+      "home_team": "México",
+      "away_team": "África do Sul",
+      "match_date": "2026-06-11 16:00",
+      "group_name": "A",
+      "home_score": null,
+      "away_score": null,
+      "status": "scheduled",
+      "can_predict": true,
+      "prediction_locked_reason": null,
+      "prediction": {
+        "id": 4,
+        "predicted_home_score": 2,
+        "predicted_away_score": 1,
+        "points": 0,
+        "created_at": "2026-05-06 17:12:53"
+      }
+    },
+    {
+      "id": 2,
+      "match_number": 2,
+      "home_team": "Coreia do Sul",
+      "away_team": "República Tcheca",
+      "match_date": "2026-06-11 23:00",
+      "group_name": "A",
+      "home_score": null,
+      "away_score": null,
+      "status": "scheduled",
+      "can_predict": true,
+      "prediction_locked_reason": null,
+      "prediction": null
+    }
+  ]
+}
+```
+
+### Ordenação
+
+A listagem vem ordenada por:
+
+```txt
+match_date ASC
+match_number ASC
+```
+
+### Uso no frontend
+
+Essa rota alimenta a tela `Ver jogos por data`.
+
+Ela retorna todos os jogos da Copa já misturados com:
+
+- dados do jogo global;
+- grupo do jogo;
+- status do jogo;
+- se o usuário ainda pode palpitar;
+- motivo do bloqueio, caso esteja bloqueado;
+- palpite existente do usuário naquele bolão, se houver.
+
+Com isso, o frontend consegue agrupar os jogos por dia e permitir edição dos palpites direto na lista cronológica.
+
+### Regras de permissão
+
+- usuário comum precisa participar do bolão informado em `pool_id`;
+- admin pode consultar a agenda de qualquer bolão;
+- a rota não altera dados, apenas lista jogos e palpites.
+
+---
+
+## 10.9 Criar jogo manualmente
 
 ```txt
 POST /matches
@@ -1077,7 +1189,7 @@ A rota existe, mas o fluxo recomendado não é cadastrar todos os jogos manualme
 
 ---
 
-## 10.9 Atualizar resultado oficial do jogo
+## 10.10 Atualizar resultado oficial do jogo
 
 ```txt
 PUT /matches/:id/result
@@ -1149,7 +1261,7 @@ Essa alteração é global. O resultado lançado para um jogo vale para todos os
 
 ---
 
-## 10.10 Atualizar status e horário do jogo
+## 10.11 Atualizar status e horário do jogo
 
 ```txt
 PUT /matches/:id/status
@@ -1430,7 +1542,179 @@ GET /predictions/me?pool_id=1
 
 ---
 
-## 11.4 Editar palpite
+
+## 11.4 Criar ou atualizar vários palpites de uma vez
+
+```txt
+POST /predictions/bulk
+```
+
+Requer token.
+
+### Header
+
+```txt
+Authorization: Bearer TOKEN_USUARIO
+Content-Type: application/json
+```
+
+### Body
+
+```json
+{
+  "pool_id": 1,
+  "predictions": [
+    {
+      "match_id": 1,
+      "predicted_home_score": 2,
+      "predicted_away_score": 1
+    },
+    {
+      "match_id": 2,
+      "predicted_home_score": 1,
+      "predicted_away_score": 1
+    }
+  ]
+}
+```
+
+### Campos obrigatórios
+
+```txt
+pool_id
+predictions
+predictions[].match_id
+predictions[].predicted_home_score
+predictions[].predicted_away_score
+```
+
+### Validação dos placares
+
+Cada item de `predictions` segue a mesma validação do palpite individual.
+
+Os campos `predicted_home_score` e `predicted_away_score` devem ser:
+
+```txt
+obrigatórios
+números inteiros
+maiores ou iguais a 0
+menores ou iguais a 99
+```
+
+### Limite
+
+A rota aceita até:
+
+```txt
+50 palpites por requisição
+```
+
+### Resposta de sucesso
+
+```json
+{
+  "message": "Palpites salvos com sucesso.",
+  "saved_count": 2,
+  "results": [
+    {
+      "match_id": 1,
+      "prediction_id": 4,
+      "action": "updated"
+    },
+    {
+      "match_id": 2,
+      "prediction_id": 5,
+      "action": "created"
+    }
+  ]
+}
+```
+
+### Campo `action`
+
+```txt
+created → palpite novo criado
+updated → palpite existente atualizado
+```
+
+### Regras
+
+- usuário precisa estar logado;
+- usuário comum precisa participar do bolão informado;
+- admin pode salvar palpites em qualquer bolão;
+- cada `match_id` pode aparecer apenas uma vez na lista enviada;
+- a rota cria palpites novos quando ainda não existem;
+- a rota atualiza palpites existentes quando já existem;
+- não permite salvar palpite bloqueado por horário;
+- não permite salvar palpite de jogo com status bloqueado;
+- jogo `postponed` permite edição/criação de palpite;
+- ao editar um palpite existente, os pontos voltam para `0` até novo resultado ser lançado.
+
+### Importante sobre transação
+
+Essa rota usa uma transação. Se algum item enviado falhar, a operação inteira é desfeita.
+
+Exemplo:
+
+```txt
+Se forem enviados 4 palpites e o terceiro estiver bloqueado, nenhum dos 4 será salvo.
+```
+
+Isso evita que o usuário fique com apenas parte dos palpites do dia salvos.
+
+### Uso no frontend
+
+Essa rota é usada na tela `Ver jogos por data`.
+
+O fluxo esperado é:
+
+```txt
+1. Frontend carrega GET /matches/schedule?pool_id=1
+2. Frontend agrupa os jogos por dia
+3. Usuário clica em Editar palpites do dia X
+4. Usuário preenche os placares do dia
+5. Frontend envia POST /predictions/bulk
+6. Backend cria ou atualiza os palpites em lote
+7. Frontend recarrega a agenda e o progresso dos grupos
+```
+
+### Possíveis erros
+
+Lista vazia:
+
+```json
+{
+  "error": "predictions deve ser uma lista com pelo menos um palpite."
+}
+```
+
+Mais de 50 palpites:
+
+```json
+{
+  "error": "Você só pode salvar até 50 palpites por vez."
+}
+```
+
+Jogo repetido na mesma requisição:
+
+```json
+{
+  "error": "O jogo 1 foi enviado mais de uma vez."
+}
+```
+
+Jogo bloqueado:
+
+```json
+{
+  "error": "Jogo 1: Palpites encerrados para este jogo. O limite é 30 minutos antes da partida."
+}
+```
+
+---
+
+## 11.5 Editar palpite
 
 ```txt
 PUT /predictions/:id
@@ -1706,12 +1990,14 @@ Esse script:
 6. Frontend lista os bolões do usuário
 7. Usuário seleciona um bolão
 8. Frontend carrega progresso dos grupos com pool_id
-9. Usuário escolhe um grupo
+9. Usuário pode escolher um grupo ou abrir jogos por data
 10. Frontend lista jogos globais do grupo com palpites daquele bolão
-11. Usuário cria ou edita palpites
-12. Admin lança resultados globais
-13. Sistema calcula pontuação
-14. Ranking do bolão é atualizado
+11. Frontend também pode listar a agenda cronológica com GET /matches/schedule
+12. Usuário cria ou edita palpites individualmente
+13. Usuário também pode salvar vários palpites de um dia com POST /predictions/bulk
+14. Admin lança resultados globais
+15. Sistema calcula pontuação
+16. Ranking do bolão é atualizado
 ```
 
 ---
@@ -1839,6 +2125,22 @@ Também pode retornar mensagens específicas como:
 }
 ```
 
+## Lista de palpites em lote vazia
+
+```json
+{
+  "error": "predictions deve ser uma lista com pelo menos um palpite."
+}
+```
+
+## Palpite repetido em lote
+
+```json
+{
+  "error": "O jogo 1 foi enviado mais de uma vez."
+}
+```
+
 ## Status inválido
 
 ```json
@@ -1935,10 +2237,22 @@ GET /matches/groups/progress?pool_id=1
 GET /matches/group/A?pool_id=1
 ```
 
+## Jogos por data com palpites
+
+```txt
+GET /matches/schedule?pool_id=1
+```
+
 ## Criar palpite
 
 ```txt
 POST /predictions
+```
+
+## Salvar palpites em lote
+
+```txt
+POST /predictions/bulk
 ```
 
 ## Editar palpite
@@ -1990,9 +2304,11 @@ Esse `pool_id` será usado em várias rotas:
 ```txt
 GET /matches/groups/progress?pool_id=1
 GET /matches/group/A?pool_id=1
+GET /matches/schedule?pool_id=1
 GET /predictions/me?pool_id=1
 GET /ranking/1
 POST /predictions
+POST /predictions/bulk
 ```
 
 ## Usuário admin
@@ -2024,6 +2340,24 @@ As telas dos usuários usam `pool_id` porque precisam misturar:
 jogos globais + palpites daquele bolão
 ```
 
+## Tela de jogos por data
+
+Para a tela `Ver jogos por data`, usar:
+
+```txt
+GET /matches/schedule?pool_id=1
+```
+
+Essa rota já retorna todos os jogos com o palpite do usuário naquele bolão.
+
+Para salvar os palpites de um dia, usar:
+
+```txt
+POST /predictions/bulk
+```
+
+O frontend deve enviar apenas os jogos preenchidos pelo usuário.
+
 ---
 
 # 19. Checklist de integração do frontend
@@ -2038,8 +2372,11 @@ jogos globais + palpites daquele bolão
 [x] Guardar pool_id selecionado
 [x] Carregar progresso dos grupos
 [x] Abrir tela de jogos por grupo
+[x] Abrir tela de jogos por data
+[x] Listar jogos por data com palpites do usuário
 [x] Criar palpites
 [x] Editar palpites
+[x] Salvar palpites em lote por dia
 [x] Exibir ranking por bolão
 [x] Exibir regras de pontuação
 [x] Mostrar menu Gerenciar apenas para admin

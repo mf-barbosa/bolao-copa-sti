@@ -6,7 +6,10 @@ const { authenticateToken } = require("../middlewares/authMiddleware");
 
 router.get("/", authenticateToken, predictionController.getPredictions);
 router.get("/me", authenticateToken, predictionController.getMyPredictions);
+
 router.post("/", authenticateToken, predictionController.createPrediction);
+router.post("/bulk", authenticateToken, predictionController.bulkUpsertPredictions);
+
 router.put("/:id", authenticateToken, predictionController.updatePrediction);
 
 module.exports = router;

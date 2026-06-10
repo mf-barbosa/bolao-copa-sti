@@ -137,6 +137,202 @@ function validatePredictionScores(predicted_home_score, predicted_away_score) {
   };
 }
 
+// Criar ou atualizar vários palpites de uma vez usando o usuário logado
+exports.bulkUpsertPredictions = async (req, res) => {
+  const userId = req.user.id;
+  const isAdmin = isAdminUser(req);
+
+  const { pool_id, predictions } = req.body;
+
+  const poolIdNumber = validatePoolId(pool_id);
+
+  if (!poolIdNumber) {
+    return res.status(400).json({
+      error: "pool_id é obrigatório e deve ser um número válido.",
+    });
+  }
+
+  if (!Array.isArray(predictions) || predictions.length === 0) {
+    return res.status(400).json({
+      error: "predictions deve ser uma lista com pelo menos um palpite.",
+    });
+  }
+
+  if (predictions.length > 50) {
+    return res.status(400).json({
+      error: "Você só pode salvar até 50 palpites por vez.",
+    });
+  }
+
+  const normalizedPredictions = [];
+  const matchIds = new Set();
+
+  for (const [index, prediction] of predictions.entries()) {
+    const matchIdNumber = validateId(prediction.match_id);
+
+    if (!matchIdNumber) {
+      return res.status(400).json({
+        error: `match_id inválido no item ${index + 1}.`,
+      });
+    }
+
+    if (matchIds.has(matchIdNumber)) {
+      return res.status(400).json({
+        error: `O jogo ${matchIdNumber} foi enviado mais de uma vez.`,
+      });
+    }
+
+    matchIds.add(matchIdNumber);
+
+    const scoreValidation = validatePredictionScores(
+      prediction.predicted_home_score,
+      prediction.predicted_away_score
+    );
+
+    if (!scoreValidation.valid) {
+      return res.status(400).json({
+        error: `Erro no jogo ${matchIdNumber}: ${scoreValidation.error}`,
+      });
+    }
+
+    normalizedPredictions.push({
+      match_id: matchIdNumber,
+      predicted_home_score: scoreValidation.homeScore,
+      predicted_away_score: scoreValidation.awayScore,
+    });
+  }
+
+  try {
+    const pool = await dbGet(
+      `
+        SELECT * FROM pools WHERE id = ?
+      `,
+      [poolIdNumber]
+    );
+
+    if (!pool) {
+      return res.status(404).json({
+        error: "Bolão não encontrado.",
+      });
+    }
+
+    if (!isAdmin) {
+      const membership = await dbGet(
+        `
+          SELECT * FROM pool_users
+          WHERE user_id = ? AND pool_id = ?
+        `,
+        [userId, poolIdNumber]
+      );
+
+      if (!membership) {
+        return res.status(403).json({
+          error: "Usuário não participa deste bolão.",
+        });
+      }
+    }
+
+    await dbRun("BEGIN TRANSACTION");
+
+    const results = [];
+
+    for (const prediction of normalizedPredictions) {
+      const match = await dbGet(
+        `
+          SELECT * FROM matches WHERE id = ?
+        `,
+        [prediction.match_id]
+      );
+
+      if (!match) {
+        throw {
+          status: 404,
+          message: `Jogo ${prediction.match_id} não encontrado.`,
+        };
+      }
+
+      const predictionStatus = canUserPredict(match);
+
+      if (!predictionStatus.allowed) {
+        throw {
+          status: 403,
+          message: `Jogo ${match.match_number || match.id}: ${predictionStatus.reason}`,
+        };
+      }
+
+      const existingPrediction = await dbGet(
+        `
+          SELECT * FROM predictions
+          WHERE user_id = ? AND match_id = ? AND pool_id = ?
+        `,
+        [userId, prediction.match_id, poolIdNumber]
+      );
+
+      if (existingPrediction) {
+        await dbRun(
+          `
+            UPDATE predictions
+            SET predicted_home_score = ?, predicted_away_score = ?, points = 0
+            WHERE id = ?
+          `,
+          [
+            prediction.predicted_home_score,
+            prediction.predicted_away_score,
+            existingPrediction.id,
+          ]
+        );
+
+        results.push({
+          match_id: prediction.match_id,
+          prediction_id: existingPrediction.id,
+          action: "updated",
+        });
+      } else {
+        const insertResult = await dbRun(
+          `
+            INSERT INTO predictions
+            (user_id, match_id, pool_id, predicted_home_score, predicted_away_score, created_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
+          `,
+          [
+            userId,
+            prediction.match_id,
+            poolIdNumber,
+            prediction.predicted_home_score,
+            prediction.predicted_away_score,
+          ]
+        );
+
+        results.push({
+          match_id: prediction.match_id,
+          prediction_id: insertResult.lastID,
+          action: "created",
+        });
+      }
+    }
+
+    await dbRun("COMMIT");
+
+    return res.json({
+      message: "Palpites salvos com sucesso.",
+      saved_count: results.length,
+      results,
+    });
+  } catch (err) {
+    try {
+      await dbRun("ROLLBACK");
+    } catch {
+      // Ignora erro de rollback para não esconder o erro principal.
+    }
+
+    return res.status(err.status || 500).json({
+      error: err.message || "Não foi possível salvar os palpites em lote.",
+    });
+  }
+};
+
+
+
 function checkUserInPool(userId, poolId, callback) {
   const query = `
     SELECT * FROM pool_users

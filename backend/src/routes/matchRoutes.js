@@ -8,7 +8,15 @@ const {
 } = require("../middlewares/authMiddleware");
 
 router.get("/", matchController.getMatches);
+
+router.get(
+  "/schedule",
+  authenticateToken,
+  matchController.getScheduleWithPredictions
+);
+
 router.get("/groups", matchController.getGroupsSummary);
+
 router.get(
   "/groups/progress",
   authenticateToken,

@@ -20,6 +20,10 @@ function GroupsPage() {
   const [matches, setMatches] = useState([]);
   const [viewMode, setViewMode] = useState('groups');
 
+  const [scheduleForms, setScheduleForms] = useState({});
+  const [expandedDayKey, setExpandedDayKey] = useState(null);
+  const [savingDayKey, setSavingDayKey] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [error, setError] = useState('');
@@ -28,10 +32,9 @@ function GroupsPage() {
   useEffect(() => {
     const storedPool = localStorage.getItem('bolao_selected_pool');
 
-    loadMatches();
-
     if (!storedPool) {
       setLoading(false);
+      setLoadingMatches(false);
       setError('Nenhum bolão selecionado. Volte e selecione um bolão.');
       return;
     }
@@ -41,9 +44,11 @@ function GroupsPage() {
 
       setSelectedPool(parsedPool);
       loadGroupsProgress(parsedPool.id);
+      loadScheduleMatches(parsedPool.id);
     } catch {
       localStorage.removeItem('bolao_selected_pool');
       setLoading(false);
+      setLoadingMatches(false);
       setError('Não foi possível carregar o bolão selecionado.');
     }
   }, []);
@@ -76,6 +81,30 @@ function GroupsPage() {
       return Number(a.match_number || a.id) - Number(b.match_number || b.id);
     });
   }, [matches]);
+
+  const scheduleDays = useMemo(() => {
+    const days = [];
+
+    chronologicalMatches.forEach((match) => {
+      const dayKey = getMatchDateKey(match.match_date);
+      const existingDay = days.find((day) => day.key === dayKey);
+
+      if (existingDay) {
+        existingDay.matches.push(match);
+        return;
+      }
+
+      days.push({
+        key: dayKey,
+        matches: [match],
+      });
+    });
+
+    return days.map((day, index) => ({
+      ...day,
+      dayNumber: index + 1,
+    }));
+  }, [chronologicalMatches]);
 
   const summary = useMemo(() => {
     const totalMatches = progress.reduce(
@@ -133,18 +162,57 @@ function GroupsPage() {
     }
   }
 
-  async function loadMatches() {
+  async function loadScheduleMatches(poolId) {
+    if (!poolId) {
+      setMatches([]);
+      setLoadingMatches(false);
+      return;
+    }
+
     try {
       setLoadingMatches(true);
 
-      const response = await api.get('/matches');
+      const response = await api.get('/matches/schedule', {
+        params: {
+          pool_id: poolId,
+        },
+      });
 
-      setMatches(response.data || []);
-    } catch {
+      const apiMatches = response.data.matches || [];
+
+      setApiPool(response.data.pool || null);
+      setMatches(apiMatches);
+      initializeScheduleForms(apiMatches);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        logout();
+        localStorage.removeItem('bolao_selected_pool');
+        localStorage.removeItem('bolao_selected_group');
+        navigate('/', { replace: true });
+        return;
+      }
+
       setMatches([]);
+      setError(
+        err.response?.data?.error ||
+          'Não foi possível carregar os jogos por data.'
+      );
     } finally {
       setLoadingMatches(false);
     }
+  }
+
+  function initializeScheduleForms(apiMatches) {
+    const initialForms = {};
+
+    apiMatches.forEach((match) => {
+      initialForms[match.id] = {
+        predicted_home_score: match.prediction?.predicted_home_score ?? '',
+        predicted_away_score: match.prediction?.predicted_away_score ?? '',
+      };
+    });
+
+    setScheduleForms(initialForms);
   }
 
   function parseMatchDate(matchDate) {
@@ -159,6 +227,14 @@ function GroupsPage() {
     }
 
     return parsedDate;
+  }
+
+  function getMatchDateKey(matchDate) {
+    if (!matchDate) {
+      return 'sem-data';
+    }
+
+    return String(matchDate).replace('T', ' ').split(' ')[0];
   }
 
   function formatMatchDate(matchDate) {
@@ -200,24 +276,18 @@ function GroupsPage() {
   function handleRefresh() {
     const pool = apiPool || selectedPool;
 
-    loadMatches();
-
     if (!pool?.id) {
       setError('Nenhum bolão selecionado para atualizar.');
       return;
     }
 
+    loadScheduleMatches(pool.id);
     loadGroupsProgress(pool.id);
   }
 
   function handleOpenGroup(groupName) {
     localStorage.setItem('bolao_selected_group', groupName);
     navigate(`/groups/${groupName}`);
-  }
-
-  function handleOpenMatch(match) {
-    localStorage.setItem('bolao_selected_group', match.group_name);
-    navigate(`/groups/${match.group_name}?match_id=${match.id}`);
   }
 
   function handleOpenRanking() {
@@ -239,6 +309,138 @@ function GroupsPage() {
     setViewMode((currentMode) =>
       currentMode === 'groups' ? 'schedule' : 'groups'
     );
+  }
+
+  function handleToggleDay(dayKey) {
+    setMessage('');
+    setError('');
+
+    setExpandedDayKey((currentDayKey) =>
+      currentDayKey === dayKey ? null : dayKey
+    );
+  }
+
+  function handleScheduleScoreChange(matchId, field, value) {
+    if (value !== '' && Number(value) < 0) return;
+
+    setScheduleForms((prev) => ({
+      ...prev,
+      [matchId]: {
+        ...prev[matchId],
+        [field]: value,
+      },
+    }));
+  }
+
+  function validateScheduleScore(value, label) {
+    if (value === '' || value === undefined || value === null) {
+      return `${label} é obrigatório.`;
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isInteger(numericValue)) {
+      return `${label} deve ser um número inteiro.`;
+    }
+
+    if (numericValue < 0) {
+      return `${label} não pode ser negativo.`;
+    }
+
+    if (numericValue > 99) {
+      return `${label} deve ser menor ou igual a 99.`;
+    }
+
+    return null;
+  }
+
+  async function handleSaveDayPredictions(day) {
+    const pool = apiPool || selectedPool;
+
+    setMessage('');
+    setError('');
+
+    if (!pool?.id) {
+      setError('Nenhum bolão selecionado.');
+      return;
+    }
+
+    const payloadPredictions = [];
+
+    for (const match of day.matches) {
+      if (!match.can_predict) {
+        continue;
+      }
+
+      const form = scheduleForms[match.id] || {};
+      const homeScore = form.predicted_home_score;
+      const awayScore = form.predicted_away_score;
+
+      const bothEmpty = homeScore === '' && awayScore === '';
+
+      if (bothEmpty) {
+        continue;
+      }
+
+      const homeValidation = validateScheduleScore(
+        homeScore,
+        `Placar de ${match.home_team}`
+      );
+
+      if (homeValidation) {
+        setError(homeValidation);
+        return;
+      }
+
+      const awayValidation = validateScheduleScore(
+        awayScore,
+        `Placar de ${match.away_team}`
+      );
+
+      if (awayValidation) {
+        setError(awayValidation);
+        return;
+      }
+
+      payloadPredictions.push({
+        match_id: match.id,
+        predicted_home_score: Number(homeScore),
+        predicted_away_score: Number(awayScore),
+      });
+    }
+
+    if (payloadPredictions.length === 0) {
+      setError('Preencha pelo menos um palpite deste dia antes de salvar.');
+      return;
+    }
+
+    try {
+      setSavingDayKey(day.key);
+
+      const response = await api.post('/predictions/bulk', {
+        pool_id: pool.id,
+        predictions: payloadPredictions,
+      });
+
+      setMessage(
+        response.data.message ||
+          `${payloadPredictions.length} palpite(s) salvo(s) com sucesso.`
+      );
+
+      await Promise.all([
+        loadScheduleMatches(pool.id),
+        loadGroupsProgress(pool.id),
+      ]);
+
+      setExpandedDayKey(null);
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          'Não foi possível salvar os palpites deste dia.'
+      );
+    } finally {
+      setSavingDayKey(null);
+    }
   }
 
   function getGroupStatus(group) {
@@ -346,8 +548,8 @@ function GroupsPage() {
             Ver regras
           </button>
 
-          <button type="button" onClick={handleRefresh} disabled={loading}>
-            {loading ? 'Atualizando...' : 'Atualizar progresso'}
+          <button type="button" onClick={handleRefresh} disabled={loading || loadingMatches}>
+            {loading || loadingMatches ? 'Atualizando...' : 'Atualizar progresso'}
           </button>
         </section>
 
@@ -449,8 +651,8 @@ function GroupsPage() {
               <div>
                 <h2>Jogos em ordem cronológica</h2>
                 <p>
-                  Veja a sequência completa das partidas organizadas por data e
-                  horário.
+                  Veja a sequência completa das partidas por dia e edite seus
+                  palpites sem sair desta tela.
                 </p>
               </div>
 
@@ -471,47 +673,180 @@ function GroupsPage() {
               </section>
             )}
 
-            {!loadingMatches && chronologicalMatches.length > 0 && (
-              <div className="schedule-list">
-                {chronologicalMatches.map((match) => (
-                  <article className="schedule-match-card" key={match.id}>
-                    <div className="schedule-match-top">
-                      <div>
-                        <span>
-                          Grupo {match.group_name} • Jogo #{match.match_number || match.id}
-                        </span>
+            {!loadingMatches && scheduleDays.length > 0 && (
+              <div className="schedule-days-list">
+                {scheduleDays.map((day) => {
+                  const isExpanded = expandedDayKey === day.key;
+                  const isSaving = savingDayKey === day.key;
 
-                        <strong>{formatMatchDate(match.match_date)}</strong>
+                  return (
+                    <section className="schedule-day-block" key={day.key}>
+                      <div className="schedule-day-header">
+                        <span>DIA {day.dayNumber}</span>
                       </div>
 
-                      <small className={getStatusClass(match.status)}>
-                        {formatStatus(match.status)}
-                      </small>
-                    </div>
+                      <div className="schedule-list">
+                        {day.matches.map((match) => {
+                          const form = scheduleForms[match.id] || {
+                            predicted_home_score: '',
+                            predicted_away_score: '',
+                          };
 
-                    <div className="schedule-match-teams">
-                      <div className="schedule-team">
-                        <TeamFlag teamName={match.home_team} size="md" />
-                        <strong>{match.home_team}</strong>
+                          const hasPrediction = Boolean(match.prediction);
+                          const canEdit = Boolean(match.can_predict);
+
+                          return (
+                            <article className="schedule-match-card" key={match.id}>
+                              <div className="schedule-match-top">
+                                <div>
+                                  <span>
+                                    Grupo {match.group_name} • Jogo #
+                                    {match.match_number || match.id}
+                                  </span>
+
+                                  <strong>{formatMatchDate(match.match_date)}</strong>
+                                </div>
+
+                                <small className={getStatusClass(match.status)}>
+                                  {formatStatus(match.status)}
+                                </small>
+                              </div>
+
+                              <div className="schedule-match-teams">
+                                <div className="schedule-team">
+                                  <TeamFlag teamName={match.home_team} size="md" />
+                                  <strong>{match.home_team}</strong>
+                                </div>
+
+                                <span className="schedule-versus">x</span>
+
+                                <div className="schedule-team right">
+                                  <strong>{match.away_team}</strong>
+                                  <TeamFlag teamName={match.away_team} size="md" />
+                                </div>
+                              </div>
+
+                              {isExpanded && (
+                                <div className="schedule-inline-prediction">
+                                  <div className="schedule-inline-header">
+                                    <div>
+                                      <strong>
+                                        {hasPrediction
+                                          ? 'Editar palpite'
+                                          : 'Criar palpite'}
+                                      </strong>
+
+                                      <span>
+                                        {hasPrediction
+                                          ? `Pontuação atual: ${
+                                              match.prediction?.points ?? 0
+                                            } pontos`
+                                          : 'Informe o placar para este jogo.'}
+                                      </span>
+                                    </div>
+
+                                    {hasPrediction && <small>Salvo</small>}
+                                  </div>
+
+                                  <div className="schedule-score-form">
+                                    <label>
+                                      <div className="schedule-score-team">
+                                        <TeamFlag teamName={match.home_team} size="sm" />
+                                        <span>{match.home_team}</span>
+                                      </div>
+
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="99"
+                                        value={form.predicted_home_score}
+                                        disabled={!canEdit || isSaving}
+                                        onChange={(event) =>
+                                          handleScheduleScoreChange(
+                                            match.id,
+                                            'predicted_home_score',
+                                            event.target.value
+                                          )
+                                        }
+                                      />
+                                    </label>
+
+                                    <strong>x</strong>
+
+                                    <label>
+                                      <div className="schedule-score-team right">
+                                        <span>{match.away_team}</span>
+                                        <TeamFlag teamName={match.away_team} size="sm" />
+                                      </div>
+
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="99"
+                                        value={form.predicted_away_score}
+                                        disabled={!canEdit || isSaving}
+                                        onChange={(event) =>
+                                          handleScheduleScoreChange(
+                                            match.id,
+                                            'predicted_away_score',
+                                            event.target.value
+                                          )
+                                        }
+                                      />
+                                    </label>
+                                  </div>
+
+                                  {!canEdit && (
+                                    <p className="schedule-locked-message">
+                                      {match.prediction_locked_reason ||
+                                        'Palpite bloqueado para este jogo.'}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </article>
+                          );
+                        })}
                       </div>
 
-                      <span className="schedule-versus">x</span>
+                      <div className="schedule-day-actions">
+                        {!isExpanded && (
+                          <button
+                            type="button"
+                            className="schedule-prediction-button"
+                            onClick={() => handleToggleDay(day.key)}
+                          >
+                            Editar palpites do dia {day.dayNumber}
+                          </button>
+                        )}
 
-                      <div className="schedule-team right">
-                        <strong>{match.away_team}</strong>
-                        <TeamFlag teamName={match.away_team} size="md" />
+                        {isExpanded && (
+                          <>
+                            <button
+                              type="button"
+                              className="schedule-save-day-button"
+                              disabled={isSaving}
+                              onClick={() => handleSaveDayPredictions(day)}
+                            >
+                              {isSaving
+                                ? 'Salvando...'
+                                : `Salvar palpites do dia ${day.dayNumber}`}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="schedule-secondary-day-button"
+                              disabled={isSaving}
+                              onClick={() => handleToggleDay(day.key)}
+                            >
+                              Fechar edição
+                            </button>
+                          </>
+                        )}
                       </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="schedule-prediction-button"
-                      onClick={() => handleOpenMatch(match)}
-                    >
-                      Editar palpite
-                    </button>
-                  </article>
-                ))}
+                    </section>
+                  );
+                })}
               </div>
             )}
           </section>

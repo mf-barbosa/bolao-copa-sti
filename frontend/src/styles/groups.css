@@ -537,6 +537,46 @@
   white-space: nowrap;
 }
 
+.schedule-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.schedule-day-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0 2px;
+  text-align: center;
+}
+
+.schedule-day-header span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  padding: 11px 26px;
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(0, 166, 81, 0.18), rgba(26, 86, 200, 0.12)),
+    rgba(17, 24, 39, 0.82);
+  border: 1px solid rgba(0, 255, 122, 0.2);
+  color: var(--verde-neon);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+}
+
 .schedule-list {
   display: flex;
   flex-direction: column;
@@ -673,13 +713,149 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.schedule-prediction-button {
-  width: min(100%, 360px);
-  align-self: center;
-  border: none;
-  border-radius: 8px;
-  background: var(--verde);
+.schedule-inline-prediction {
+  padding: 18px;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(0, 166, 81, 0.08), rgba(26, 86, 200, 0.05)),
+    rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(0, 255, 122, 0.14);
+}
+
+.schedule-inline-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.schedule-inline-header div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-inline-header strong {
   color: var(--branco);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.schedule-inline-header span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.schedule-inline-header small {
+  color: var(--verde-neon);
+  background: rgba(0, 166, 81, 0.1);
+  border: 1px solid rgba(0, 255, 122, 0.22);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.schedule-score-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  align-items: end;
+  gap: 14px;
+}
+
+.schedule-score-form label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-score-team {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(255, 255, 255, 0.68);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.schedule-score-team.right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.schedule-score-team span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-score-form input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+  border-radius: 10px;
+  background: rgba(11, 15, 26, 0.54);
+  color: var(--branco);
+  padding: 15px 14px;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.schedule-score-form input:focus {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.12);
+}
+
+.schedule-score-form input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.schedule-score-form > strong {
+  align-self: end;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  color: var(--verde-neon);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  text-align: center;
+}
+
+.schedule-locked-message {
+  margin-top: 14px;
+  color: #ffbdc5;
+  background: rgba(232, 25, 44, 0.08);
+  border: 1px solid rgba(232, 25, 44, 0.2);
+  padding: 12px 14px;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.schedule-day-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.schedule-prediction-button,
+.schedule-save-day-button,
+.schedule-secondary-day-button {
+  width: min(100%, 360px);
+  border-radius: 8px;
   padding: 15px 26px;
   cursor: pointer;
   font-family: 'Barlow Condensed', sans-serif;
@@ -690,16 +866,46 @@
   transition: 0.2s;
 }
 
-.schedule-prediction-button:hover {
+.schedule-prediction-button,
+.schedule-save-day-button {
+  border: none;
+  background: var(--verde);
+  color: var(--branco);
+}
+
+.schedule-prediction-button:hover,
+.schedule-save-day-button:hover {
   background: var(--verde-neon);
   color: #000;
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 255, 122, 0.22);
 }
 
-.schedule-prediction-button:focus {
+.schedule-secondary-day-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.schedule-secondary-day-button:hover {
+  border-color: var(--verde-neon);
+  color: var(--verde-neon);
+  transform: translateY(-2px);
+}
+
+.schedule-prediction-button:focus,
+.schedule-save-day-button:focus,
+.schedule-secondary-day-button:focus {
   outline: 2px solid rgba(0, 255, 122, 0.55);
   outline-offset: 3px;
+}
+
+.schedule-save-day-button:disabled,
+.schedule-secondary-day-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 1000px) {
@@ -742,12 +948,21 @@
     grid-template-columns: 1fr;
   }
 
+  .groups-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .groups-actions {
     flex-direction: column;
+    gap: 10px;
   }
 
   .groups-actions button {
     width: 100%;
+  }
+
+  .groups-actions button:nth-of-type(n + 3) {
+    display: none;
   }
 
   .group-flags-row {
@@ -759,28 +974,16 @@
     flex-direction: column;
   }
 
+  .schedule-day-header span {
+    min-width: 130px;
+    padding: 10px 22px;
+    font-size: 17px;
+  }
+
   .schedule-match-top {
     flex-direction: column;
   }
 
-  .schedule-match-teams {
-    grid-template-columns: 1fr;
-  }
-
-  .schedule-team.right {
-    justify-content: flex-start;
-    text-align: left;
-    flex-direction: row-reverse;
-  }
-
-  .schedule-versus {
-    margin: 0 auto;
-  }
-
-  .schedule-prediction-button {
-    width: 100%;
-  }
-  @media (max-width: 800px) {
   .schedule-match-teams {
     grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr) !important;
     gap: 8px;
@@ -822,9 +1025,68 @@
     margin: 0 auto;
     font-size: 25px;
   }
+
+  .schedule-inline-header {
+    flex-direction: column;
+  }
+
+  .schedule-score-form {
+    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .schedule-score-team,
+  .schedule-score-team.right {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .schedule-score-team {
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .schedule-score-team.right {
+    flex-direction: column-reverse;
+  }
+
+  .schedule-score-team span {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.1;
+  }
+
+  .schedule-score-form input {
+    padding: 13px 8px;
+  }
+
+  .schedule-score-form > strong {
+    height: 48px;
+    font-size: 30px;
+  }
+
+  .schedule-day-actions {
+    flex-direction: column;
+  }
+
+  .schedule-day-actions button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 390px) {
+  .groups-main {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .groups-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-match-card {
+    padding: 16px;
+  }
+
   .schedule-match-teams {
     grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) !important;
     gap: 6px;
@@ -845,18 +1107,12 @@
     height: 32px;
     font-size: 23px;
   }
-}
-@media (max-width: 800px) {
-  .groups-actions button:nth-of-type(n + 3) {
-    display: none;
+
+  .schedule-score-form {
+    grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr);
   }
 
-  .groups-actions {
-    gap: 10px;
+  .schedule-score-form > strong {
+    font-size: 27px;
   }
-
-  .groups-actions button {
-    width: 100%;
-  }
-}
 }
