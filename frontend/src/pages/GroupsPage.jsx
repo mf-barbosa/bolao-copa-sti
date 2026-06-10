@@ -215,6 +215,20 @@ function GroupsPage() {
     setScheduleForms(initialForms);
   }
 
+  function normalizeScoreInput(value) {
+    const onlyNumbers = String(value).replace(/\D/g, '');
+
+    if (onlyNumbers.length > 2) {
+      return null;
+    }
+
+    if (onlyNumbers !== '' && Number(onlyNumbers) > 99) {
+      return null;
+    }
+
+    return onlyNumbers;
+  }
+
   function parseMatchDate(matchDate) {
     if (!matchDate) {
       return null;
@@ -321,13 +335,17 @@ function GroupsPage() {
   }
 
   function handleScheduleScoreChange(matchId, field, value) {
-    if (value !== '' && Number(value) < 0) return;
+    const normalizedValue = normalizeScoreInput(value);
+
+    if (normalizedValue === null) {
+      return;
+    }
 
     setScheduleForms((prev) => ({
       ...prev,
       [matchId]: {
         ...prev[matchId],
-        [field]: value,
+        [field]: normalizedValue,
       },
     }));
   }
@@ -756,9 +774,10 @@ function GroupsPage() {
                                       </div>
 
                                       <input
-                                        type="number"
-                                        min="0"
-                                        max="99"
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={2}
                                         value={form.predicted_home_score}
                                         disabled={!canEdit || isSaving}
                                         onChange={(event) =>
@@ -780,9 +799,10 @@ function GroupsPage() {
                                       </div>
 
                                       <input
-                                        type="number"
-                                        min="0"
-                                        max="99"
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={2}
                                         value={form.predicted_away_score}
                                         disabled={!canEdit || isSaving}
                                         onChange={(event) =>

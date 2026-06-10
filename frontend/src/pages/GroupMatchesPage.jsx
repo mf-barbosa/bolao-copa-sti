@@ -21,7 +21,7 @@ function GroupMatchesPage() {
 
   const [predictionForms, setPredictionForms] = useState({});
   const [loading, setLoading] = useState(true);
-  const [savingPredictionId, setSavingPredictionId] = useState(null);
+  const [savingGroupPredictions, setSavingGroupPredictions] = useState(false);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -90,6 +90,10 @@ function GroupMatchesPage() {
     };
   }, [matches]);
 
+  const editableMatchesCount = useMemo(() => {
+    return matches.filter((match) => match.can_predict).length;
+  }, [matches]);
+
   async function loadGroupMatches(poolId, currentGroupName) {
     try {
       setLoading(true);
@@ -138,6 +142,20 @@ function GroupMatchesPage() {
     setPredictionForms(initialForms);
   }
 
+  function normalizeScoreInput(value) {
+    const onlyNumbers = String(value).replace(/\D/g, '');
+
+    if (onlyNumbers.length > 2) {
+      return null;
+    }
+
+    if (onlyNumbers !== '' && Number(onlyNumbers) > 99) {
+      return null;
+    }
+
+    return onlyNumbers;
+  }
+
   function handleBackToGroups() {
     navigate('/groups');
   }
@@ -158,20 +176,22 @@ function GroupMatchesPage() {
   }
 
   function handleScoreChange(matchId, field, value) {
-    if (value !== '' && Number(value) < 0) return;
+    const normalizedValue = normalizeScoreInput(value);
+
+    if (normalizedValue === null) {
+      return;
+    }
 
     setPredictionForms((prev) => ({
       ...prev,
       [matchId]: {
         ...prev[matchId],
-        [field]: value,
+        [field]: normalizedValue,
       },
     }));
   }
 
-  function validatePrediction(matchId) {
-    const form = predictionForms[matchId];
-
+  function validatePredictionScores(match, form) {
     if (!form) {
       return 'Não foi possível encontrar o formulário deste jogo.';
     }
@@ -180,81 +200,95 @@ function GroupMatchesPage() {
       form.predicted_home_score === '' ||
       form.predicted_away_score === ''
     ) {
-      return 'Informe os dois placares antes de salvar.';
+      return `Informe os dois placares para ${match.home_team} x ${match.away_team}.`;
     }
 
     const homeScore = Number(form.predicted_home_score);
     const awayScore = Number(form.predicted_away_score);
 
     if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) {
-      return 'Os placares precisam ser números inteiros.';
+      return `Os placares de ${match.home_team} x ${match.away_team} precisam ser números inteiros.`;
     }
 
     if (homeScore < 0 || awayScore < 0) {
-      return 'Os placares não podem ser negativos.';
+      return `Os placares de ${match.home_team} x ${match.away_team} não podem ser negativos.`;
     }
 
     if (homeScore > 99 || awayScore > 99) {
-      return 'Os placares devem ser menores ou iguais a 99.';
+      return `Os placares de ${match.home_team} x ${match.away_team} devem ser menores ou iguais a 99.`;
     }
 
     return null;
   }
 
-  async function handleSavePrediction(match) {
-    const validationError = validatePrediction(match.id);
+  async function handleSaveGroupPredictions() {
+    const pool = apiPool || selectedPool;
 
     setMessage('');
     setError('');
-
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    const pool = apiPool || selectedPool;
 
     if (!pool?.id) {
       setError('Nenhum bolão selecionado.');
       return;
     }
 
-    const form = predictionForms[match.id];
+    const payloadPredictions = [];
 
-    const payload = {
-      predicted_home_score: Number(form.predicted_home_score),
-      predicted_away_score: Number(form.predicted_away_score),
-    };
+    for (const match of matches) {
+      if (!match.can_predict) {
+        continue;
+      }
+
+      const form = predictionForms[match.id] || {};
+      const homeScore = form.predicted_home_score;
+      const awayScore = form.predicted_away_score;
+
+      const bothEmpty = homeScore === '' && awayScore === '';
+
+      if (bothEmpty) {
+        continue;
+      }
+
+      const validationError = validatePredictionScores(match, form);
+
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
+      payloadPredictions.push({
+        match_id: match.id,
+        predicted_home_score: Number(homeScore),
+        predicted_away_score: Number(awayScore),
+      });
+    }
+
+    if (payloadPredictions.length === 0) {
+      setError('Preencha pelo menos um palpite do grupo antes de salvar.');
+      return;
+    }
 
     try {
-      setSavingPredictionId(match.id);
+      setSavingGroupPredictions(true);
 
-      if (match.prediction?.id) {
-        await api.put(`/predictions/${match.prediction.id}`, payload);
+      const response = await api.post('/predictions/bulk', {
+        pool_id: pool.id,
+        predictions: payloadPredictions,
+      });
 
-        setMessage(
-          `Palpite atualizado: ${match.home_team} ${payload.predicted_home_score} x ${payload.predicted_away_score} ${match.away_team}`
-        );
-      } else {
-        await api.post('/predictions', {
-          match_id: match.id,
-          pool_id: pool.id,
-          ...payload,
-        });
-
-        setMessage(
-          `Palpite criado: ${match.home_team} ${payload.predicted_home_score} x ${payload.predicted_away_score} ${match.away_team}`
-        );
-      }
+      setMessage(
+        response.data.message ||
+          `${payloadPredictions.length} palpite(s) salvo(s) com sucesso.`
+      );
 
       await loadGroupMatches(pool.id, groupName);
     } catch (err) {
       setError(
         err.response?.data?.error ||
-          'Não foi possível salvar o palpite deste jogo.'
+          'Não foi possível salvar os palpites deste grupo.'
       );
     } finally {
-      setSavingPredictionId(null);
+      setSavingGroupPredictions(false);
     }
   }
 
@@ -321,8 +355,8 @@ function GroupMatchesPage() {
             <h1>Grupo {groupName}</h1>
 
             <p className="group-matches-description">
-              Confira os jogos do grupo, veja se ainda é possível palpitar e
-              salve seus placares dentro do bolão selecionado.
+              Confira os jogos do grupo, preencha seus placares e salve todos os
+              palpites de uma vez pelo botão no final da página.
             </p>
           </div>
 
@@ -410,165 +444,186 @@ function GroupMatchesPage() {
         )}
 
         {!loading && matches.length > 0 && (
-          <section className="matches-list">
-            {matches.map((match) => {
-              const form = predictionForms[match.id] || {
-                predicted_home_score: '',
-                predicted_away_score: '',
-              };
+          <>
+            <section className="matches-list">
+              {matches.map((match) => {
+                const form = predictionForms[match.id] || {
+                  predicted_home_score: '',
+                  predicted_away_score: '',
+                };
 
-              const hasPrediction = Boolean(match.prediction);
-              const isSaving = savingPredictionId === match.id;
-              const canEdit = Boolean(match.can_predict);
-              const isSelectedMatch = String(match.id) === selectedMatchId;
+                const hasPrediction = Boolean(match.prediction);
+                const canEdit = Boolean(match.can_predict);
+                const isSelectedMatch = String(match.id) === selectedMatchId;
 
-              return (
-                <article
-                  key={match.id}
-                  id={`match-${match.id}`}
-                  tabIndex={isSelectedMatch ? -1 : undefined}
-                  className={`match-card ${
-                    isSelectedMatch ? 'match-card-highlight' : ''
-                  }`}
-                >
-                  <div className="match-card-top">
-                    <div>
-                      <span>Jogo #{match.match_number || match.id}</span>
-                      <strong>{formatDate(match.match_date)}</strong>
-                    </div>
-
-                    <small className={getStatusClass(match.status)}>
-                      {formatStatus(match.status)}
-                    </small>
-                  </div>
-
-                  <div className="match-teams">
-                    <div className="team-box">
-                      <div className="team-heading">
-                        <span>Mandante</span>
-                      </div>
-
-                      <strong className="team-name">
-                        <TeamFlag teamName={match.home_team} size="lg" />
-                        <span>{match.home_team}</span>
-                      </strong>
-                    </div>
-
-                    <div className="versus-box">x</div>
-
-                    <div className="team-box right">
-                      <div className="team-heading right">
-                        <span>Visitante</span>
-                      </div>
-
-                      <strong className="team-name right">
-                        <span>{match.away_team}</span>
-                        <TeamFlag teamName={match.away_team} size="lg" />
-                      </strong>
-                    </div>
-                  </div>
-
-                  {match.status === 'finished' && (
-                    <div className="official-result">
-                      <span>Resultado oficial</span>
-                      <strong>
-                        {match.home_score} x {match.away_score}
-                      </strong>
-                    </div>
-                  )}
-
-                  <div className="prediction-area">
-                    <div className="prediction-header">
+                return (
+                  <article
+                    key={match.id}
+                    id={`match-${match.id}`}
+                    tabIndex={isSelectedMatch ? -1 : undefined}
+                    className={`match-card ${
+                      isSelectedMatch ? 'match-card-highlight' : ''
+                    }`}
+                  >
+                    <div className="match-card-top">
                       <div>
-                        <h2>
-                          {hasPrediction
-                            ? 'Seu palpite'
-                            : 'Fazer palpite'}
-                        </h2>
-
-                        <p>
-                          {hasPrediction
-                            ? `Pontuação atual: ${
-                                match.prediction.points ?? 0
-                              } pontos`
-                            : 'Informe o placar que você acredita para este jogo.'}
-                        </p>
+                        <span>Jogo #{match.match_number || match.id}</span>
+                        <strong>{formatDate(match.match_date)}</strong>
                       </div>
 
-                      {hasPrediction && (
-                        <span className="prediction-badge">Salvo</span>
-                      )}
+                      <small className={getStatusClass(match.status)}>
+                        {formatStatus(match.status)}
+                      </small>
                     </div>
 
-                    <div className="score-form">
-                      <label>
-                        <div className="score-team-label only-flag">
-                          <TeamFlag teamName={match.home_team} size="sm" />
+                    <div className="match-teams">
+                      <div className="team-box">
+                        <div className="team-heading">
+                          <span>Mandante</span>
                         </div>
 
-                        <input
-                          type="number"
-                          min="0"
-                          max="99"
-                          value={form.predicted_home_score}
-                          disabled={!canEdit || isSaving}
-                          onChange={(event) =>
-                            handleScoreChange(
-                              match.id,
-                              'predicted_home_score',
-                              event.target.value
-                            )
-                          }
-                        />
-                      </label>
+                        <strong className="team-name">
+                          <TeamFlag teamName={match.home_team} size="lg" />
+                          <span>{match.home_team}</span>
+                        </strong>
+                      </div>
 
-                      <strong>x</strong>
+                      <div className="versus-box">x</div>
 
-                      <label>
-                        <div className="score-team-label right only-flag">
-                          <TeamFlag teamName={match.away_team} size="sm" />
+                      <div className="team-box right">
+                        <div className="team-heading right">
+                          <span>Visitante</span>
                         </div>
 
-                        <input
-                          type="number"
-                          min="0"
-                          max="99"
-                          value={form.predicted_away_score}
-                          disabled={!canEdit || isSaving}
-                          onChange={(event) =>
-                            handleScoreChange(
-                              match.id,
-                              'predicted_away_score',
-                              event.target.value
-                            )
-                          }
-                        />
-                      </label>
+                        <strong className="team-name right">
+                          <span>{match.away_team}</span>
+                          <TeamFlag teamName={match.away_team} size="lg" />
+                        </strong>
+                      </div>
                     </div>
 
-                    {!canEdit && (
-                      <p className="locked-message">
-                        {match.prediction_locked_reason ||
-                          'Palpite bloqueado para este jogo.'}
-                      </p>
+                    {match.status === 'finished' && (
+                      <div className="official-result">
+                        <span>Resultado oficial</span>
+                        <strong>
+                          {match.home_score} x {match.away_score}
+                        </strong>
+                      </div>
                     )}
 
-                    <button
-                      type="button"
-                      disabled={!canEdit || isSaving}
-                      onClick={() => handleSavePrediction(match)}
-                    >
-                      {isSaving
-                        ? 'Salvando...'
-                        : hasPrediction
-                          ? 'Atualizar palpite'
-                          : 'Salvar palpite'}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
+                    <div className="prediction-area">
+                      <div className="prediction-header">
+                        <div>
+                          <h2>
+                            {hasPrediction
+                              ? 'Seu palpite'
+                              : 'Fazer palpite'}
+                          </h2>
+
+                          <p>
+                            {hasPrediction
+                              ? `Pontuação atual: ${
+                                  match.prediction.points ?? 0
+                                } pontos`
+                              : 'Informe o placar que você acredita para este jogo.'}
+                          </p>
+                        </div>
+
+                        {hasPrediction && (
+                          <span className="prediction-badge">Salvo</span>
+                        )}
+                      </div>
+
+                      <div className="score-form">
+                        <label>
+                          <div className="score-team-label only-flag">
+                            <TeamFlag teamName={match.home_team} size="sm" />
+                          </div>
+
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={2}
+                            value={form.predicted_home_score}
+                            disabled={!canEdit || savingGroupPredictions}
+                            onChange={(event) =>
+                              handleScoreChange(
+                                match.id,
+                                'predicted_home_score',
+                                event.target.value
+                              )
+                            }
+                          />
+                        </label>
+
+                        <strong>x</strong>
+
+                        <label>
+                          <div className="score-team-label right only-flag">
+                            <TeamFlag teamName={match.away_team} size="sm" />
+                          </div>
+
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={2}
+                            value={form.predicted_away_score}
+                            disabled={!canEdit || savingGroupPredictions}
+                            onChange={(event) =>
+                              handleScoreChange(
+                                match.id,
+                                'predicted_away_score',
+                                event.target.value
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      {!canEdit && (
+                        <p className="locked-message">
+                          {match.prediction_locked_reason ||
+                            'Palpite bloqueado para este jogo.'}
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+
+            <section className="group-save-panel">
+              <div className="group-save-panel-content">
+                <span>Palpites do Grupo {groupName}</span>
+
+                <h2>Salvar todos os palpites do grupo</h2>
+
+                <p>
+                  Preencha os placares dos jogos acima e salve tudo de uma vez.
+                  Jogos bloqueados são ignorados automaticamente.
+                </p>
+
+                <small>
+                  {editableMatchesCount === 1
+                    ? '1 jogo ainda aceita palpite'
+                    : `${editableMatchesCount} jogos ainda aceitam palpite`}
+                </small>
+              </div>
+
+              <button
+                type="button"
+                className="group-save-button"
+                disabled={savingGroupPredictions || editableMatchesCount === 0}
+                onClick={handleSaveGroupPredictions}
+              >
+                {savingGroupPredictions
+                  ? 'Salvando...'
+                  : `Salvar palpites do Grupo ${groupName}`}
+              </button>
+            </section>
+          </>
         )}
       </main>
     </div>

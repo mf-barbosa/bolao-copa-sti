@@ -57,7 +57,7 @@ function AppHeader({ backLabel, onBack }) {
 
             <div className="app-brand-text">
               <span className="app-logo">CHUTAÍ</span>
-              <p>O Bolão da turma</p>
+              <p>O Bolão da Copa do Mundo</p>
             </div>
           </div>
         </div>

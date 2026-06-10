@@ -212,7 +212,7 @@ function AuthPage() {
 
           <div>
             <span className="auth-logo">CHUTAÍ</span>
-            <small>O Bolão da turma</small>
+            <small>O Bolão da Copa do Mundo</small>
           </div>
         </div>
 
