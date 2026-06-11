@@ -4,6 +4,42 @@ function isAdminUser(req) {
   return Number(req.user?.is_admin) === 1;
 }
 
+function parseMatchDateAsBrazilTime(matchDate) {
+  if (!matchDate) {
+    return null;
+  }
+
+  const normalizedDate = String(matchDate).trim().replace(" ", "T");
+
+  if (!normalizedDate) {
+    return null;
+  }
+
+  if (/([+-]\d{2}:\d{2}|Z)$/i.test(normalizedDate)) {
+    const parsedDateWithTimezone = new Date(normalizedDate);
+
+    if (Number.isNaN(parsedDateWithTimezone.getTime())) {
+      return null;
+    }
+
+    return parsedDateWithTimezone;
+  }
+
+  const normalizedDateWithSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(
+    normalizedDate
+  )
+    ? `${normalizedDate}:00`
+    : normalizedDate;
+
+  const parsedDate = new Date(`${normalizedDateWithSeconds}-03:00`);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
 function canUserPredict(match) {
   const status = match.status || "scheduled";
 
@@ -20,7 +56,16 @@ function canUserPredict(match) {
     };
   }
 
-  const matchDate = new Date(match.match_date.replace(" ", "T"));
+  const matchDate = parseMatchDateAsBrazilTime(match.match_date);
+
+  if (!matchDate) {
+    return {
+      allowed: false,
+      reason:
+        "Data do jogo inválida. Não foi possível validar o prazo do palpite.",
+    };
+  }
+
   const predictionDeadline = new Date(matchDate.getTime() - 30 * 60 * 1000);
   const now = new Date();
 
