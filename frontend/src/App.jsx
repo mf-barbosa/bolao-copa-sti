@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -11,7 +12,86 @@ import RankingPage from './pages/RankingPage';
 import RulesPage from './pages/RulesPage';
 import AdminPage from './pages/AdminPage';
 
+import {
+  getToken,
+  isSessionExpired,
+  logout,
+  updateSessionActivity,
+} from './auth/authService';
+
+const ACTIVITY_EVENTS = [
+  'click',
+  'keydown',
+  'mousemove',
+  'scroll',
+  'touchstart',
+];
+
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    function handleExpiredSession() {
+      if (!getToken()) {
+        return;
+      }
+
+      if (isSessionExpired()) {
+        logout();
+        navigate('/', { replace: true });
+      }
+    }
+
+    let lastActivityWrite = 0;
+
+    function handleUserActivity() {
+      if (!getToken()) {
+        return;
+      }
+
+      if (isSessionExpired()) {
+        logout();
+        navigate('/', { replace: true });
+        return;
+      }
+
+      const now = Date.now();
+
+      if (now - lastActivityWrite < 10000) {
+        return;
+      }
+
+      lastActivityWrite = now;
+      updateSessionActivity();
+    }
+
+    if (getToken()) {
+      if (isSessionExpired()) {
+        logout();
+        navigate('/', { replace: true });
+      } else {
+        updateSessionActivity();
+      }
+    }
+
+    ACTIVITY_EVENTS.forEach((eventName) => {
+      window.addEventListener(eventName, handleUserActivity, {
+        passive: true,
+      });
+    });
+
+    const sessionInterval = window.setInterval(handleExpiredSession, 10000);
+
+    return () => {
+      ACTIVITY_EVENTS.forEach((eventName) => {
+        window.removeEventListener(eventName, handleUserActivity);
+      });
+
+      window.clearInterval(sessionInterval);
+    };
+  }, [navigate, location.pathname]);
+
   return (
     <Routes>
       <Route path="/" element={<AuthPage />} />
